@@ -1,0 +1,2887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>School DRRM Dashboard · Antipolo ES</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #111c2e;
+            --panel-light: #17243a;
+            --text: #f4f7fb;
+            --muted: #9eabc0;
+            --border: rgba(255,255,255,0.08);
+            --accent: #4da3ff;
+            --success: #36c275;
+            --warning: #f2b84b;
+            --danger: #ef6262;
+            --orange: #f08b3a;
+            --pagasa-yellow: #fcd116;
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.3;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            flex: 0 0 auto;
+            padding: 1vh 1.6vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: #0d1728;
+            gap: 1.5vw;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .school-logo {
+            flex-shrink: 0;
+            height: clamp(52px, 5.5vw, 84px);
+            width: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .school-logo img {
+            height: 100%;
+            width: auto;
+            max-width: clamp(70px, 9vw, 160px);
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(77, 163, 255, 0.25));
+        }
+
+        .school-logo .logo-fallback {
+            display: none;
+            width: clamp(52px, 5vw, 76px);
+            height: clamp(52px, 5vw, 76px);
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a2a4a, #243b5f);
+            border-radius: 50%;
+            border: 2px solid var(--pagasa-yellow);
+            box-shadow: 0 0 16px rgba(252, 209, 22, 0.2);
+        }
+
+        .school-logo.img-error .logo-fallback { display: flex; }
+        .school-logo.img-error img { display: none; }
+
+        .school-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3vh;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .school-name {
+            font-size: clamp(1.35rem, 2.1vw, 2.4rem);
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.15;
+        }
+
+        .dashboard-title {
+            font-size: clamp(0.8rem, 1.05vw, 1.2rem);
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .data-status {
+            display: flex;
+            align-items: center;
+            gap: 0.7vw;
+            font-size: clamp(0.75rem, 0.95vw, 1.05rem);
+            color: var(--muted);
+            margin-top: 0.25vh;
+            flex-wrap: wrap;
+        }
+
+        .data-status .label {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.75;
+            font-weight: 600;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .status-pill::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px rgba(54,194,117,0.7);
+            animation: pulse-dot 2s infinite;
+        }
+
+        .status-pill.offline { color: var(--warning); }
+        .status-pill.offline::before {
+            background: var(--warning);
+            box-shadow: 0 0 6px rgba(242,184,75,0.7);
+        }
+
+        .update-time { color: var(--muted); font-weight: 500; }
+        .update-time strong { color: var(--text); font-weight: 600; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .clock-container { text-align: right; flex-shrink: 0; }
+
+        #clock {
+            font-size: clamp(2rem, 3.1vw, 3.8rem);
+            font-weight: 700;
+            line-height: 1.05;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
+        }
+
+        #date {
+            color: var(--muted);
+            font-size: clamp(0.8rem, 1.05vw, 1.25rem);
+            margin-top: 0.15vh;
+        }
+
+        /* MAIN GRID */
+        main {
+            flex: 1 1 auto;
+            padding: 1vh 1vw;
+            display: grid;
+            grid-template-columns: 2.2fr 1.15fr 1.15fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 0.8vw;
+            min-height: 0;
+        }
+
+        .widget {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.1vw 1.2vw;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.9vh;
+            flex-shrink: 0;
+            gap: 0.8vw;
+        }
+
+        .widget-title {
+            font-size: clamp(0.8rem, 1.05vw, 1.2rem);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .widget-title svg {
+            width: clamp(15px, 1.2vw, 19px);
+            height: clamp(15px, 1.2vw, 19px);
+            flex-shrink: 0;
+            opacity: 0.85;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        .status-dot.green { background: var(--success); box-shadow: 0 0 5px rgba(54,194,117,0.5); }
+        .status-dot.yellow { background: var(--warning); box-shadow: 0 0 5px rgba(242,184,75,0.5); }
+        .status-dot.red { background: var(--danger); box-shadow: 0 0 5px rgba(239,98,98,0.5); }
+        .status-dot.orange { background: var(--orange); box-shadow: 0 0 5px rgba(240,139,58,0.5); }
+
+        #weatherStatus,
+        #eqStatus,
+        #newsStatus,
+        .widget-header > div:last-child:not(.widget-title) {
+            font-size: clamp(0.6rem, 0.72vw, 0.85rem);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+        }
+
+        /* WEATHER */
+        .weather { grid-row: span 2; }
+
+        .weather-top {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 1.2vw;
+            margin-top: 0.4vh;
+            flex-shrink: 0;
+        }
+
+        .weather-icon {
+            flex-shrink: 0;
+            width: clamp(84px, 9vw, 140px);
+            height: clamp(84px, 9vw, 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .weather-icon svg { width: 100%; height: 100%; }
+
+        .weather-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3vh;
+            min-width: 0;
+        }
+
+        .weather-temp {
+            font-size: clamp(3.2rem, 5.6vw, 5.6rem);
+            font-weight: 700;
+            line-height: 0.95;
+            letter-spacing: -2px;
+        }
+
+        .weather-condition {
+            font-size: clamp(1.05rem, 1.3vw, 1.6rem);
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .weather-feels {
+            color: var(--muted);
+            margin-top: 4px;
+            font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+        }
+
+        .air-quality-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+            padding: 0.9vw 1.1vw;
+            background: linear-gradient(135deg, #17243a, #1a2d4a);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--success);
+            flex-shrink: 0;
+        }
+
+        .aqi-number {
+            font-size: clamp(2.2rem, 2.9vw, 3.3rem);
+            font-weight: 700;
+            line-height: 1;
+            color: var(--success);
+        }
+
+        .aqi-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15vh;
+            min-width: 0;
+        }
+
+        .aqi-label {
+            font-size: clamp(0.7rem, 0.82vw, 0.95rem);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+        }
+
+        .aqi-status-text {
+            font-size: clamp(0.92rem, 1.05vw, 1.3rem);
+            font-weight: 600;
+            color: var(--success);
+            white-space: nowrap;
+        }
+
+        .aqi-detail-text {
+            font-size: clamp(0.72rem, 0.82vw, 1rem);
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 0.55vw;
+            margin-top: 1.2vh;
+            flex-shrink: 0;
+        }
+
+        .detail-box {
+            background: var(--panel-light);
+            padding: 0.6vw 0.7vw;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            min-width: 0;
+        }
+
+        .detail-icon {
+            flex-shrink: 0;
+            width: clamp(17px, 1.3vw, 22px);
+            height: clamp(17px, 1.3vw, 22px);
+            opacity: 0.7;
+        }
+
+        .detail-icon svg { width: 100%; height: 100%; }
+
+        .detail-text { min-width: 0; flex: 1; }
+
+        .detail-label {
+            color: var(--muted);
+            font-size: clamp(0.58rem, 0.72vw, 0.85rem);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .detail-value {
+            font-size: clamp(0.95rem, 1.15vw, 1.4rem);
+            font-weight: 600;
+            margin-top: 0.2vh;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .detail-box.has-hint {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.6vw 0.8vw;
+        }
+
+        .detail-hint {
+            font-size: clamp(0.55rem, 0.68vw, 0.8rem);
+            color: var(--muted);
+            opacity: 0.9;
+            margin-top: 3px;
+            line-height: 1.3;
+            font-weight: 400;
+            white-space: normal;
+        }
+
+        .weather-summary {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.7vw;
+            margin-top: 1.1vh;
+            padding: 0.7vw 1vw;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #17243a, #1a2d4a);
+            border-left: 3px solid var(--accent);
+            flex-shrink: 0;
+        }
+
+        .weather-summary-icon {
+            flex-shrink: 0;
+            width: clamp(24px, 1.9vw, 32px);
+            height: clamp(24px, 1.9vw, 32px);
+            opacity: 0.85;
+            margin-top: 1px;
+        }
+
+        .weather-summary-icon svg { width: 100%; height: 100%; }
+
+        .weather-summary-text {
+            font-size: clamp(0.95rem, 1.1vw, 1.35rem);
+            color: var(--text);
+            line-height: 1.45;
+            font-weight: 500;
+            min-width: 0;
+        }
+
+        .par-strip {
+            display: flex;
+            align-items: center;
+            gap: 0.8vw;
+            margin-top: 1.1vh;
+            padding: 0.7vw 1vw;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #2a1a1a, #3a2222);
+            border: 1px solid rgba(239, 98, 98, 0.3);
+            flex-shrink: 0;
+        }
+
+        .par-strip.clear {
+            background: linear-gradient(135deg, #10271d, #102f22);
+            border-color: rgba(54, 194, 117, 0.3);
+        }
+
+        .par-strip-icon {
+            flex-shrink: 0;
+            width: clamp(34px, 3vw, 46px);
+            height: clamp(34px, 3vw, 46px);
+        }
+
+        .par-strip-icon svg { width: 100%; height: 100%; }
+
+        .par-strip-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15vh;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .par-strip-title {
+            font-size: clamp(0.9rem, 1.1vw, 1.25rem);
+            font-weight: 700;
+            color: var(--danger);
+            line-height: 1.2;
+        }
+
+        .par-strip.clear .par-strip-title { color: var(--success); }
+
+        .par-strip-label {
+            font-size: clamp(0.6rem, 0.72vw, 0.85rem);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+            font-weight: 600;
+        }
+
+        .par-strip-sub {
+            font-size: clamp(0.68rem, 0.82vw, 1rem);
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .par-strip-sub strong { color: var(--text); }
+
+        .source-note {
+            margin-top: auto;
+            color: var(--muted);
+            font-size: clamp(0.6rem, 0.7vw, 0.82rem);
+            opacity: 0.75;
+            letter-spacing: 0.5px;
+            padding-top: 0.6vh;
+        }
+
+        .source-note a { color: var(--accent); text-decoration: none; }
+        .source-note a:hover { text-decoration: underline; }
+
+        /* EARTHQUAKE */
+        .eq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .eq-row {
+            padding: 0.75vh 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .eq-row:first-child { padding-top: 0.2vh; }
+        .eq-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .eq-row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.6vw;
+        }
+
+        .eq-mag {
+            font-size: clamp(1.5rem, 2.1vw, 2.1rem);
+            font-weight: 700;
+            line-height: 1.1;
+            flex-shrink: 0;
+        }
+
+        .eq-time {
+            font-size: clamp(0.7rem, 0.85vw, 1rem);
+            color: var(--muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .eq-place {
+            font-size: clamp(0.85rem, 1vw, 1.15rem);
+            color: var(--text);
+            margin-top: 0.2vh;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
+        }
+
+        .eq-meta {
+            font-size: clamp(0.7rem, 0.8vw, 0.95rem);
+            color: var(--muted);
+            margin-top: 0.2vh;
+            display: flex;
+            align-items: center;
+            gap: 0.6vw;
+        }
+
+        .eq-meta svg {
+            width: clamp(11px, 0.85vw, 14px);
+            height: clamp(11px, 0.85vw, 14px);
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        .eq-loading {
+            color: var(--muted);
+            font-style: italic;
+            font-size: clamp(0.9rem, 1.05vw, 1.2rem);
+        }
+
+        /* NEWS */
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .news-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2vh;
+            padding: 0.7vh 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s ease;
+        }
+
+        .news-item:first-child { padding-top: 0.2vh; }
+        .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .news-item:hover { background: rgba(77,163,255,0.04); }
+
+        .news-headline {
+            font-size: clamp(0.95rem, 1.1vw, 1.3rem);
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            font-size: clamp(0.68rem, 0.8vw, 0.95rem);
+            color: var(--muted);
+        }
+
+        .news-source {
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .news-loading {
+            color: var(--muted);
+            font-style: italic;
+            font-size: clamp(0.85rem, 1vw, 1.15rem);
+            text-align: center;
+            padding: 1vh 0;
+        }
+
+        /* SCHOOL STATUS */
+        .school-status {
+            background: linear-gradient(135deg, #10271d, #102f22);
+            border-color: rgba(54,194,117,0.15);
+            transition: background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .school-status[data-state="NORMAL"] {
+            background: linear-gradient(135deg, #10271d, #102f22);
+            border-color: rgba(54,194,117,0.15);
+        }
+        .school-status[data-state="MONITORING"] {
+            background: linear-gradient(135deg, #2a2310, #332a12);
+            border-color: rgba(242,184,75,0.25);
+        }
+        .school-status[data-state="SUSPENDED"] {
+            background: linear-gradient(135deg, #2a1a0e, #3a2410);
+            border-color: rgba(240,139,58,0.3);
+        }
+        .school-status[data-state="EMERGENCY"] {
+            background: linear-gradient(135deg, #2a1010, #3a1515);
+            border-color: rgba(239,98,98,0.35);
+        }
+
+        .school-status .widget-title {
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+        }
+
+        .school-status .widget-title.admin-active::after {
+            content: "🔒 ADMIN";
+            font-size: 0.55em;
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: rgba(77,163,255,0.2);
+            border-radius: 4px;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .school-status-content {
+            display: flex;
+            align-items: center;
+            gap: 0.9vw;
+            flex-shrink: 0;
+        }
+
+        .school-status-icon {
+            flex-shrink: 0;
+            width: clamp(44px, 4vw, 62px);
+            height: clamp(44px, 4vw, 62px);
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .school-status-icon svg { width: 100%; height: 100%; }
+
+        .school-status-main {
+            font-size: clamp(1.7rem, 2.5vw, 2.8rem);
+            font-weight: 700;
+            color: var(--success);
+            margin: 0;
+            line-height: 1.05;
+            transition: color 0.5s ease;
+        }
+
+        .school-status[data-state="MONITORING"] .school-status-main { color: var(--warning); }
+        .school-status[data-state="SUSPENDED"] .school-status-main { color: var(--orange); }
+        .school-status[data-state="EMERGENCY"] .school-status-main { color: var(--danger); }
+
+        .school-status-sub {
+            color: var(--muted);
+            font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+            line-height: 1.4;
+        }
+
+        .school-status-override {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            font-size: clamp(0.6rem, 0.72vw, 0.85rem);
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.3vh;
+        }
+
+        .school-status-override.active { display: flex; }
+
+        .school-status-override svg {
+            width: clamp(10px, 0.85vw, 13px);
+            height: clamp(10px, 0.85vw, 13px);
+        }
+
+        .emergency-contacts {
+            margin-top: 1vh;
+            padding-top: 0.8vh;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.45vh;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .emergency-title {
+            font-size: clamp(0.7rem, 0.8vw, 0.95rem);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            font-weight: 700;
+            margin-bottom: 0.3vh;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .emergency-title svg {
+            width: clamp(12px, 0.95vw, 15px);
+            height: clamp(12px, 0.95vw, 15px);
+            opacity: 0.8;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6vw;
+            background: rgba(255,255,255,0.03);
+            padding: 0.5vw 0.7vw;
+            border-radius: 5px;
+            font-size: clamp(0.75rem, 0.88vw, 1.05rem);
+        }
+
+        .contact-name {
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .contact-name svg {
+            width: clamp(12px, 0.95vw, 15px);
+            height: clamp(12px, 0.95vw, 15px);
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        .contact-number {
+            font-weight: 700;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        /* ANNOUNCEMENT */
+        .announcement-card {
+            background: linear-gradient(135deg, #131e30, #16253a);
+            border-color: rgba(77,163,255,0.2);
+        }
+
+        .announcement-card .widget-title {
+            color: var(--accent);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+        }
+
+        .announcement-card .widget-title.admin-active::after {
+            content: "🔒 ADMIN";
+            font-size: 0.55em;
+            margin-left: 8px;
+            padding: 2px 6px;
+            background: rgba(77,163,255,0.2);
+            border-radius: 4px;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .announcement-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            gap: 0.6vh;
+            justify-content: flex-start;
+        }
+
+        .daily-announcement {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3vh;
+            padding-bottom: 0.7vh;
+            min-height: 0;
+            justify-content: flex-start;
+        }
+
+        .daily-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: clamp(0.62rem, 0.72vw, 0.85rem);
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 0.2vh;
+        }
+
+        .daily-label::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 5px var(--success);
+            animation: pulse-dot 2s infinite;
+        }
+
+        .daily-headline {
+            font-size: clamp(1.05rem, 1.3vw, 1.5rem);
+            font-weight: 700;
+            line-height: 1.25;
+            color: var(--text);
+        }
+
+        .daily-body {
+            font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .announcement-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 0.2vh 0;
+            flex-shrink: 0;
+        }
+
+        .event-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3vh;
+            min-height: 0;
+            justify-content: flex-start;
+        }
+
+        .announcement-headline {
+            font-size: clamp(1.05rem, 1.3vw, 1.5rem);
+            font-weight: 700;
+            line-height: 1.25;
+            color: var(--text);
+        }
+
+        .announcement-body {
+            font-size: clamp(0.8rem, 0.95vw, 1.15rem);
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .announcement-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: clamp(0.62rem, 0.72vw, 0.85rem);
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(77,163,255,0.1);
+            padding: 3px 9px;
+            border-radius: 20px;
+            align-self: flex-start;
+            margin-bottom: 0.3vh;
+        }
+
+        .announcement-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 5px var(--accent);
+        }
+
+        /* ADMIN MODAL */
+        .admin-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 2vh 2vw;
+        }
+
+        .admin-modal-overlay.show { display: flex; }
+
+        .admin-modal {
+            background: #0f1a2d;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.8vw 2vw;
+            width: min(780px, 94vw);
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+        }
+
+        .admin-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5vh;
+            padding-bottom: 1vh;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-modal-header h2 {
+            font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .admin-close-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .admin-close-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+        }
+
+        .admin-section-title {
+            font-size: clamp(0.75rem, 0.9vw, 1rem);
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--success);
+            font-weight: 700;
+            margin: 1.5vh 0 0.8vh;
+            padding-bottom: 0.4vh;
+            border-bottom: 1px solid rgba(54,194,117,0.2);
+        }
+
+        .admin-section-title.event {
+            color: var(--accent);
+            border-bottom-color: rgba(77,163,255,0.2);
+        }
+
+        .admin-field { margin-bottom: 1.3vh; }
+
+        .admin-field label {
+            display: block;
+            font-size: clamp(0.7rem, 0.85vw, 0.9rem);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 0.5vh;
+        }
+
+        .admin-field input,
+        .admin-field textarea,
+        .admin-field select {
+            width: 100%;
+            background: var(--panel-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8vh 1vw;
+            color: var(--text);
+            font-family: inherit;
+            font-size: clamp(0.85rem, 1vw, 1.05rem);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .admin-field input:focus,
+        .admin-field textarea:focus,
+        .admin-field select:focus { border-color: var(--accent); }
+
+        .admin-field textarea {
+            resize: vertical;
+            min-height: 60px;
+            line-height: 1.5;
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7vw;
+            margin-top: 2vh;
+            padding-top: 1.5vh;
+            border-top: 1px solid var(--border);
+        }
+
+        .admin-btn {
+            padding: 0.9vh 1.4vw;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--panel-light);
+            color: var(--text);
+            font-family: inherit;
+            font-size: clamp(0.75rem, 0.9vw, 0.95rem);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .admin-btn:hover {
+            background: #1e2f4a;
+            border-color: var(--accent);
+        }
+
+        .admin-btn.primary {
+            background: var(--accent);
+            color: #0b1220;
+            border-color: var(--accent);
+        }
+
+        .admin-btn.primary:hover { background: #6cb4ff; }
+
+        .admin-btn.danger {
+            border-color: rgba(239,98,98,0.4);
+            color: var(--danger);
+        }
+
+        .admin-btn.danger:hover { background: rgba(239,98,98,0.1); }
+
+        /* ANIMATIONS */
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes rain-drop {
+            0% { transform: translateY(-2px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(6px); opacity: 0; }
+        }
+
+        @keyframes flash {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0.2; }
+        }
+
+        .animate-spin { animation: spin-slow 20s linear infinite; transform-origin: center; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-flash { animation: flash 4s ease-in-out infinite; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            html, body { overflow: auto; height: auto; }
+            body { min-height: 100vh; }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 14px 16px;
+            }
+
+            .clock-container {
+                text-align: left;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                flex-wrap: wrap;
+                gap: 4px 16px;
+            }
+
+            main {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                height: auto;
+                padding: 14px;
+                gap: 12px;
+            }
+
+            .weather { grid-row: auto; }
+            .widget { padding: 16px; }
+
+            .weather-top { grid-template-columns: auto 1fr; }
+            .air-quality-badge { grid-column: 1 / -1; justify-self: start; margin-top: 8px; }
+            .weather-details { grid-template-columns: repeat(2, 1fr); }
+
+            .source-note { margin-top: 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--panel); }
+        ::-webkit-scrollbar-thumb { background: #2a3a55; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3a4a65; }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-left">
+        <div class="school-logo" id="schoolLogo">
+            <img
+                src="https://lh3.googleusercontent.com/d/1itqCuh0GMHEfPjbkz3KkHf51dIAzqftH"
+                alt="Antipolo Elementary School Logo"
+                onerror="document.getElementById('schoolLogo').classList.add('img-error')"
+            >
+            <div class="logo-fallback" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:65%;height:65%;">
+                    <g stroke="#fcd116" stroke-width="3" stroke-linecap="round">
+                        <path d="M32 6v6M32 52v6M6 32h6M52 32h6M12 12l4 4M48 48l4 4M12 52l4-4M48 16l4-4"/>
+                    </g>
+                    <circle cx="32" cy="32" r="10" fill="#fcd116"/>
+                    <path d="M14 40c4-3 8-3 12 0s8 3 12 0 8-3 12 0" stroke="#0033a0" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    <circle cx="32" cy="32" r="10" stroke="#ce1126" stroke-width="1.5" fill="none" opacity="0.6"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="school-info">
+            <div class="school-name">Antipolo Elementary School</div>
+            <div class="dashboard-title">School DRRM Information Dashboard</div>
+
+            <div class="data-status">
+                <span class="label">Data Status:</span>
+                <span class="status-pill" id="systemStatus">System Online</span>
+                <span class="update-time">Last Update: <strong id="lastUpdate">—</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="clock-container">
+        <div id="clock" aria-live="polite">--:--:-- --</div>
+        <div id="date">Loading date…</div>
+    </div>
+</header>
+
+<main>
+    <!-- WEATHER -->
+    <section class="widget weather" aria-label="Live weather, air quality, and PAR alerts" id="weatherWidget">
+        <div class="widget-header">
+            <div class="widget-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                </svg>
+                Live Weather · Air Quality · PAR Alerts
+            </div>
+            <div id="weatherStatus">
+                <span class="status-dot green"></span>LIVE
+            </div>
+        </div>
+
+        <div class="weather-top">
+            <div class="weather-icon" id="weatherIcon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="12" fill="#fcd116"/>
+                    <g stroke="#fcd116" stroke-width="3" stroke-linecap="round">
+                        <path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.6 13.6l5.6 5.6M44.8 44.8l5.6 5.6M13.6 50.4l5.6-5.6M44.8 19.2l5.6-5.6"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="weather-text">
+                <div class="weather-temp" id="weatherTemp">—°</div>
+                <div class="weather-condition" id="weatherCondition">Loading…</div>
+                <div class="weather-feels" id="weatherFeels">Feels like —°C</div>
+            </div>
+
+            <div class="air-quality-badge" id="aqiBadge">
+                <div class="aqi-number" id="aqiValue">42</div>
+                <div class="aqi-info">
+                    <div class="aqi-label">AQI · PM2.5</div>
+                    <div class="aqi-status-text" id="aqiStatus">Good</div>
+                    <div class="aqi-detail-text" id="aqiDetail">18 µg/m³</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="weather-details">
+            <div class="detail-box">
+                <div class="detail-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                </div>
+                <div class="detail-text">
+                    <div class="detail-label">Humidity</div>
+                    <div class="detail-value" id="weatherHumidity">—%</div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+                    </svg>
+                </div>
+                <div class="detail-text">
+                    <div class="detail-label">Wind</div>
+                    <div class="detail-value" id="weatherWind">— km/h</div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
+                        <path d="M8 19v2M12 19v2M16 19v2"/>
+                    </svg>
+                </div>
+                <div class="detail-text">
+                    <div class="detail-label">Rain Chance</div>
+                    <div class="detail-value" id="weatherRain">—%</div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </div>
+                <div class="detail-text">
+                    <div class="detail-label">Visibility</div>
+                    <div class="detail-value" id="weatherVisibility">— km</div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#f2b84b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 18a5 5 0 0 0-10 0"/>
+                        <line x1="12" y1="9" x2="12" y2="2"/>
+                        <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+                        <line x1="1" y1="18" x2="3" y2="18"/>
+                        <line x1="21" y1="18" x2="23" y2="18"/>
+                        <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+                        <line x1="23" y1="22" x2="1" y2="22"/>
+                        <polyline points="8 6 12 2 16 6"/>
+                    </svg>
+                </div>
+                <div class="detail-text">
+                    <div class="detail-label">Sunrise / Sunset</div>
+                    <div class="detail-value" id="weatherSun">— / —</div>
+                </div>
+            </div>
+
+            <div class="detail-box has-hint">
+                <div style="display:flex;align-items:center;gap:0.4vw;width:100%;">
+                    <div class="detail-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#f2b84b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                        </svg>
+                    </div>
+                    <div class="detail-text">
+                        <div class="detail-label">UV Index</div>
+                        <div class="detail-value" id="weatherUV">—</div>
+                    </div>
+                </div>
+                <div class="detail-hint" id="weatherUVHint">Sun strength — higher means stronger burn risk.</div>
+            </div>
+
+            <div class="detail-box has-hint">
+                <div style="display:flex;align-items:center;gap:0.4vw;width:100%;">
+                    <div class="detail-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 12l4-4"/>
+                            <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
+                        </svg>
+                    </div>
+                    <div class="detail-text">
+                        <div class="detail-label">Pressure</div>
+                        <div class="detail-value" id="weatherPressure">— hPa</div>
+                    </div>
+                </div>
+                <div class="detail-hint" id="weatherPressureHint">Falling usually means rain coming; rising means fair weather.</div>
+            </div>
+
+            <div class="detail-box has-hint">
+                <div style="display:flex;align-items:center;gap:0.4vw;width:100%;">
+                    <div class="detail-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>
+                            <path d="M9 15a3 3 0 0 0 3 3"/>
+                        </svg>
+                    </div>
+                    <div class="detail-text">
+                        <div class="detail-label">Dew Point</div>
+                        <div class="detail-value" id="weatherDew">—°C</div>
+                    </div>
+                </div>
+                <div class="detail-hint" id="weatherDewHint">Higher means muggier air.</div>
+            </div>
+
+            <div class="detail-box has-hint">
+                <div style="display:flex;align-items:center;gap:0.4vw;width:100%;">
+                    <div class="detail-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 18a5 5 0 0 0-10 0"/>
+                            <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
+                        </svg>
+                    </div>
+                    <div class="detail-text">
+                        <div class="detail-label">Cloud Cover</div>
+                        <div class="detail-value" id="weatherClouds">—%</div>
+                    </div>
+                </div>
+                <div class="detail-hint" id="weatherCloudsHint">How much sky the clouds hide.</div>
+            </div>
+        </div>
+
+        <div class="weather-summary" id="weatherSummary">
+            <div class="weather-summary-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+            </div>
+            <div class="weather-summary-text" id="weatherSummaryText">
+                Loading weather summary…
+            </div>
+        </div>
+
+        <div class="par-strip" id="parStrip">
+            <div class="par-strip-icon" id="parStripIcon">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
+                    <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
+                    <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+                    <path d="M44 14 A20 20 0 0 1 56 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    <path d="M20 50 A20 20 0 0 1 8 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+            <div class="par-strip-text">
+                <div class="par-strip-label">PAR Weather Alert</div>
+                <div class="par-strip-title" id="parStripTitle">Super Typhoon Choi-wan</div>
+                <div class="par-strip-sub" id="parStripSub">
+                    Outside PAR · 2,605 km East of Extreme Northern Luzon · <strong>195 km/h</strong> max winds
+                </div>
+            </div>
+        </div>
+
+        <div class="source-note">
+            Weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · AQ: PAGASA/DENR · PAR: PAGASA
+        </div>
+    </section>
+
+    <!-- EARTHQUAKE -->
+    <section class="widget" aria-label="Earthquake monitor" id="earthquakeWidget">
+        <div class="widget-header">
+            <div class="widget-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h4l2-6 4 12 2-6h8"/>
+                </svg>
+                Earthquake Monitor
+            </div>
+            <div id="eqStatus">
+                <span class="status-dot green"></span>NORMAL
+            </div>
+        </div>
+
+        <div id="eqContainer">
+            <div class="eq-loading">Fetching latest seismic data…</div>
+        </div>
+
+        <div class="source-note">
+            Source: <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener">USGS Earthquake API</a>
+        </div>
+    </section>
+
+    <!-- NEWS HEADLINES -->
+    <section class="widget" aria-label="Philippine news headlines" id="newsWidget">
+        <div class="widget-header">
+            <div class="widget-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16v16H4z"/>
+                    <path d="M4 9h16M9 4v16"/>
+                </svg>
+                News Headlines
+            </div>
+            <div id="newsStatus">
+                <span class="status-dot yellow"></span>LOADING
+            </div>
+        </div>
+        <div class="news-list" id="newsList">
+            <div class="news-loading">Fetching Philstar headlines…</div>
+        </div>
+        <div class="source-note">
+            Source: <a href="https://www.philstar.com/" target="_blank" rel="noopener">Philstar</a> via rss2json
+        </div>
+    </section>
+
+    <!-- SCHOOL STATUS -->
+    <section class="widget school-status" id="schoolStatusWidget" data-state="NORMAL" aria-label="School status and emergency contacts">
+        <div class="widget-header">
+            <div class="widget-title" id="schoolStatusTitle" title="Long-press for 3 seconds to edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
+                    <path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>
+                </svg>
+                School Status
+            </div>
+            <div id="schoolStatusBadge">
+                <span class="status-dot green"></span>ACTIVE
+            </div>
+        </div>
+
+        <div class="school-status-content">
+            <div class="school-status-icon" id="schoolStatusIcon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="#36c275" opacity="0.15"/>
+                    <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#36c275" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <div class="school-status-main" id="schoolStatusMain">NORMAL</div>
+                <div class="school-status-sub" id="schoolStatusSub">Classes ongoing. No active emergency.</div>
+                <div class="school-status-override" id="schoolStatusOverride">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    Manual override active
+                </div>
+            </div>
+        </div>
+
+        <div class="emergency-contacts">
+            <div class="emergency-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ef6262" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                Emergency Contacts
+            </div>
+
+            <div class="contact-item">
+                <span class="contact-name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
+                    </svg>
+                    Municipal DRRMO
+                </span>
+                <span class="contact-number">0917-XXX-1001</span>
+            </div>
+
+            <div class="contact-item">
+                <span class="contact-name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef6262" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2s2 4 2 7c0 2-1 3-1 3s4-1 4-5c0 0 3 5 3 9a8 8 0 1 1-16 0c0-4 3-9 3-9s-1 4-1 5 4 2 4 2-2-2-2-5 4-7 4-7z"/>
+                    </svg>
+                    Bureau of Fire Protection
+                </span>
+                <span class="contact-number">0917-XXX-1002</span>
+            </div>
+
+            <div class="contact-item">
+                <span class="contact-name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/>
+                    </svg>
+                    Philippine National Police
+                </span>
+                <span class="contact-number">0917-XXX-1003</span>
+            </div>
+
+            <div class="contact-item">
+                <span class="contact-name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#36c275" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/>
+                        <circle cx="12" cy="10" r="2.5"/>
+                    </svg>
+                    Rescue Unit
+                </span>
+                <span class="contact-number">0917-XXX-1004</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCHOOL ANNOUNCEMENT -->
+    <section class="widget announcement-card" aria-label="School announcement">
+        <div class="widget-header">
+            <div class="widget-title" id="announcementTitle" title="Long-press for 3 seconds to edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 11l18-5v12L3 14v-3z"/>
+                    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                </svg>
+                School Announcement
+            </div>
+            <div><span class="status-dot green"></span>ACTIVE</div>
+        </div>
+
+        <div class="announcement-content">
+            <div class="daily-announcement">
+                <div class="daily-label">Today's Announcement</div>
+                <div class="daily-headline" id="dailyHeadline">No announcements for today.</div>
+                <div class="daily-body" id="dailyBody">Please check back later or refer to your class adviser.</div>
+            </div>
+
+            <div class="announcement-divider"></div>
+
+            <div class="event-section">
+                <div class="announcement-badge" id="announcementBadge">Upcoming Event</div>
+                <div class="announcement-headline" id="announcementHeadline">Portfolio Day this Friday</div>
+                <div class="announcement-body" id="announcementBody">Parents and guardians are encouraged to attend. Please coordinate with your child's class adviser for schedules and requirements.</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- SCHOOL STATUS ADMIN MODAL -->
+<div class="admin-modal-overlay" id="statusAdminModal">
+    <div class="admin-modal">
+        <div class="admin-modal-header">
+            <h2>🚨 School Status Admin</h2>
+            <button class="admin-close-btn" id="statusAdminClose" title="Close">&times;</button>
+        </div>
+
+        <div class="admin-section-title">Manual Override</div>
+
+        <div class="admin-field">
+            <label for="fieldStatusState">Status</label>
+            <select id="fieldStatusState">
+                <option value="">— Automatic (no override) —</option>
+                <option value="NORMAL">NORMAL — No active threat</option>
+                <option value="MONITORING">MONITORING — Potential threat nearby</option>
+                <option value="SUSPENDED">CLASSES SUSPENDED — Official suspension</option>
+                <option value="EMERGENCY">EMERGENCY — Active incident on campus</option>
+            </select>
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldStatusMessage">Message</label>
+            <textarea id="fieldStatusMessage" placeholder="e.g. Classes suspended until Oct 8 due to Typhoon Queenie." maxlength="300"></textarea>
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldStatusAsOf">As-of Date (optional)</label>
+            <input type="date" id="fieldStatusAsOf">
+        </div>
+
+        <div class="admin-actions">
+            <button class="admin-btn primary" id="statusAdminSave">💾 Save</button>
+            <button class="admin-btn" id="statusAdminClear">✖ Clear Override</button>
+            <button class="admin-btn" id="statusAdminExport">⬇️ Export JSON</button>
+            <button class="admin-btn" id="statusAdminImportBtn">⬆️ Import JSON</button>
+            <input type="file" id="statusAdminImportFile" accept=".json,application/json" style="display:none;">
+        </div>
+    </div>
+</div>
+
+<!-- ANNOUNCEMENT ADMIN MODAL -->
+<div class="admin-modal-overlay" id="adminModal">
+    <div class="admin-modal">
+        <div class="admin-modal-header">
+            <h2>📢 Announcement Admin</h2>
+            <button class="admin-close-btn" id="adminClose" title="Close">&times;</button>
+        </div>
+
+        <div class="admin-section-title">Today's Announcement</div>
+
+        <div class="admin-field">
+            <label for="fieldDailyHeadline">Headline</label>
+            <input type="text" id="fieldDailyHeadline" placeholder="e.g. Heavy rain expected this afternoon" maxlength="120">
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldDailyBody">Body / Details</label>
+            <textarea id="fieldDailyBody" placeholder="e.g. Bring umbrellas and stay indoors during lightning." maxlength="400"></textarea>
+        </div>
+
+        <div class="admin-section-title event">Upcoming Event</div>
+
+        <div class="admin-field">
+            <label for="fieldBadge">Badge Text (small tag)</label>
+            <input type="text" id="fieldBadge" placeholder="Upcoming Event" maxlength="40">
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldHeadline">Headline</label>
+            <input type="text" id="fieldHeadline" placeholder="Portfolio Day this Friday" maxlength="100">
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldBody">Body / Details</label>
+            <textarea id="fieldBody" placeholder="Parents and guardians are encouraged to attend..." maxlength="500"></textarea>
+        </div>
+
+        <div class="admin-field">
+            <label for="fieldDate">As-of Date (optional)</label>
+            <input type="date" id="fieldDate">
+        </div>
+
+        <div class="admin-actions">
+            <button class="admin-btn primary" id="adminSave">💾 Save</button>
+            <button class="admin-btn" id="adminExport">⬇️ Export JSON</button>
+            <button class="admin-btn" id="adminImportBtn">⬆️ Import JSON</button>
+            <button class="admin-btn danger" id="adminReset">↺ Reset to Default</button>
+            <input type="file" id="adminImportFile" accept=".json,application/json" style="display:none;">
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // =========================================
+        // ⚠️ EDIT THESE TWO URLS BEFORE UPLOADING
+        // =========================================
+        // Replace YOUR_USERNAME and YOUR_REPO with your actual GitHub details.
+        // To get the URL: open the .json file on GitHub, click the "Raw" button,
+        // and copy the address bar URL. It should start with
+        // "https://raw.githubusercontent.com/"
+        const ANNOUNCEMENT_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/announcement.json';
+        const STATUS_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/school_status.json';
+
+        // How often to re-fetch the remote JSON.
+        // GitHub's CDN caches raw files ~5 min, so values below 5 min won't help.
+        const ANNOUNCEMENT_REFRESH_MS = 5 * 60 * 1000; // 5 min
+        const STATUS_REFRESH_MS = 5 * 60 * 1000;       // 5 min
+
+        // =========================================
+        // CONFIG
+        // =========================================
+        const LATITUDE = 10.916994;
+        const LONGITUDE = 124.694503;
+        const TIMEZONE = 'Asia/Manila';
+        const WEATHER_REFRESH_MS = 15 * 60 * 1000;
+        const EQ_REFRESH_MS = 5 * 60 * 1000;
+        const NEWS_REFRESH_MS = 15 * 60 * 1000;
+        const ANNOUNCEMENT_STORAGE_KEY = 'school_event_config';
+        const STATUS_STORAGE_KEY = 'school_status_config';
+
+        // Auto-trigger thresholds for school status
+        const EQ_PROXIMITY_KM = 150;
+        const EQ_MIN_MAG_TRIGGER = 5.0;
+        const EQ_LOOKBACK_HOURS = 24;
+        const AQI_MONITORING_THRESHOLD = 101;
+
+        const PH_BOUNDS = {
+            minlatitude: 4.5, maxlatitude: 21.5,
+            minlongitude: 116.0, maxlongitude: 127.5
+        };
+
+        const PHILSTAR_RSS = 'https://www.philstar.com/rss/headlines';
+        const RSS2JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+        const DEFAULT_ANNOUNCEMENT = {
+            today: {
+                headline: 'No announcements for today.',
+                body: 'Please check back later or refer to your class adviser.'
+            },
+            event: {
+                badge: 'Upcoming Event',
+                headline: 'Portfolio Day this Friday',
+                body: "Parents and guardians are encouraged to attend. Please coordinate with your child's class adviser for schedules and requirements.",
+                asOfDate: ''
+            }
+        };
+
+        const DEFAULT_STATUS = {
+            state: '',
+            message: '',
+            asOfDate: ''
+        };
+
+        const WMO_CODES = {
+            0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+            45: 'Fog', 48: 'Depositing rime fog',
+            51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
+            56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
+            61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+            66: 'Light freezing rain', 67: 'Heavy freezing rain',
+            71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow', 77: 'Snow grains',
+            80: 'Slight rain showers', 81: 'Moderate rain showers', 82: 'Violent rain showers',
+            85: 'Slight snow showers', 86: 'Heavy snow showers',
+            95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
+        };
+
+        function distanceKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const toRad = (d) => d * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return 2 * R * Math.asin(Math.sqrt(a));
+        }
+
+        function uvDescription(uv) {
+            if (uv === null || uv === undefined) return 'Not available';
+            if (uv < 3) return 'Low — safe to be outside.';
+            if (uv < 6) return 'Moderate — wear a hat & sunscreen.';
+            if (uv < 8) return 'High — limit midday sun.';
+            if (uv < 11) return 'Very High — avoid sun 10am–4pm.';
+            return 'Extreme — stay indoors if possible.';
+        }
+
+        function pressureHint(hPa) {
+            if (hPa === null || hPa === undefined) return 'Air pressure reading.';
+            if (hPa < 1000) return 'Low pressure — possible rain or storm.';
+            if (hPa < 1010) return 'Slightly low — chance of showers.';
+            if (hPa < 1020) return 'Normal — stable weather likely.';
+            return 'High pressure — fair weather expected.';
+        }
+
+        function dewPointHint(dew, temp) {
+            if (dew === null || dew === undefined) return 'Not available.';
+            if (temp !== null && dew >= temp - 1) return 'Air is nearly saturated — muggy.';
+            if (dew >= 24) return 'Very humid — feels sticky.';
+            if (dew >= 20) return 'Humid — typical PH weather.';
+            if (dew >= 16) return 'Comfortable humidity.';
+            return 'Dry air — feels cool.';
+        }
+
+        function cloudHint(cloud) {
+            if (cloud === null || cloud === undefined) return 'Not available.';
+            if (cloud < 10) return 'Clear skies — sun is out.';
+            if (cloud < 40) return 'Mostly clear — few clouds.';
+            if (cloud < 70) return 'Partly cloudy.';
+            if (cloud < 90) return 'Mostly cloudy.';
+            return 'Overcast — very cloudy.';
+        }
+
+        function timeAgo(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+
+        function buildWeatherSummary(current, daily) {
+            const temp = current.temperature_2m;
+            const feels = current.apparent_temperature;
+            const rain = current.precipitation_probability;
+            const wind = current.wind_speed_10m;
+            const code = current.weather_code;
+            const clouds = current.cloud_cover;
+            const uv = daily.uv_index_max ? daily.uv_index_max[0] : null;
+
+            let tempDesc;
+            if (temp < 24) tempDesc = 'Cool';
+            else if (temp < 28) tempDesc = 'Mild';
+            else if (temp < 32) tempDesc = 'Warm';
+            else if (temp < 35) tempDesc = 'Hot';
+            else tempDesc = 'Very hot';
+
+            let humidDesc = '';
+            if (feels - temp >= 3) humidDesc = ' and humid';
+            else if (feels - temp >= 1) humidDesc = ' and slightly muggy';
+
+            let skyDesc = '';
+            if (clouds != null) {
+                if (clouds < 20) skyDesc = 'mostly clear skies';
+                else if (clouds < 50) skyDesc = 'partly cloudy skies';
+                else if (clouds < 80) skyDesc = 'mostly cloudy skies';
+                else skyDesc = 'overcast skies';
+            }
+
+            let rainDesc = '';
+            if (rain != null) {
+                if (rain >= 70) rainDesc = 'a high chance of rain';
+                else if (rain >= 40) rainDesc = 'a good chance of rain';
+                else if (rain >= 20) rainDesc = 'a slight chance of rain';
+                else rainDesc = 'little to no rain expected';
+            }
+
+            let windDesc = '';
+            if (wind >= 40) windDesc = 'strong winds';
+            else if (wind >= 20) windDesc = 'breezy conditions';
+            else if (wind >= 10) windDesc = 'light winds';
+            else windDesc = 'calm winds';
+
+            let uvDesc = '';
+            if (uv != null) {
+                if (uv >= 8) uvDesc = 'Very high UV — limit midday sun.';
+                else if (uv >= 6) uvDesc = 'High UV — wear sunscreen.';
+                else if (uv >= 3) uvDesc = 'Moderate UV — hat recommended.';
+                else uvDesc = 'Low UV — safe outdoors.';
+            }
+
+            let conditionPrefix = '';
+            if (code >= 95) conditionPrefix = '⛈️ Thunderstorms expected. ';
+            else if (code >= 61 && code <= 67) conditionPrefix = '🌧️ Rain likely today. ';
+            else if (code >= 51 && code <= 57) conditionPrefix = '🌦️ Light drizzle possible. ';
+            else if (code === 45 || code === 48) conditionPrefix = '🌫️ Foggy conditions. ';
+
+            let sentence = conditionPrefix;
+            sentence += tempDesc + humidDesc;
+            if (skyDesc) sentence += ' with ' + skyDesc;
+            if (rainDesc) sentence += ', ' + rainDesc;
+            sentence += '. ';
+            if (windDesc && wind >= 20) sentence += 'Expect ' + windDesc + '. ';
+            if (uvDesc) sentence += uvDesc;
+
+            return sentence.trim();
+        }
+
+        function getWeatherIcon(code) {
+            if (code === 0 || code === 1) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="12" fill="#fcd116" class="animate-float"/>
+                    <g stroke="#fcd116" stroke-width="3" stroke-linecap="round" class="animate-spin">
+                        <path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.6 13.6l5.6 5.6M44.8 44.8l5.6 5.6M13.6 50.4l5.6-5.6M44.8 19.2l5.6-5.6"/>
+                    </g>
+                </svg>`;
+            }
+            if (code === 2) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="22" cy="22" r="9" fill="#fcd116" class="animate-float"/>
+                    <g stroke="#fcd116" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M22 6v5M22 33v5M6 22h5M33 22h5"/>
+                    </g>
+                    <path d="M20 42a10 10 0 0 1 0-20 12 12 0 0 1 22 4 9 9 0 0 1-2 16H20z" fill="#9eabc0" opacity="0.85"/>
+                </svg>`;
+            }
+            if (code === 3) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 40a10 10 0 0 1 0-20 12 12 0 0 1 22 4 9 9 0 0 1-2 16H18z" fill="#9eabc0" opacity="0.9"/>
+                    <path d="M28 50a9 9 0 0 1 0-18 11 11 0 0 1 20 3 8 8 0 0 1-2 15H28z" fill="#7a8ba3" opacity="0.85"/>
+                </svg>`;
+            }
+            if (code === 45 || code === 48) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 40a10 10 0 0 1 0-20 12 12 0 0 1 22 4 9 9 0 0 1-2 16H20z" fill="#9eabc0" opacity="0.8"/>
+                    <g stroke="#9eabc0" stroke-width="2.5" stroke-linecap="round" opacity="0.7">
+                        <path d="M10 46h44M14 52h36M10 58h44"/>
+                    </g>
+                </svg>`;
+            }
+            if ((code >= 51 && code <= 57) || (code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 36a10 10 0 0 1 0-20 12 12 0 0 1 22 4 9 9 0 0 1-2 16H20z" fill="#7a8ba3"/>
+                    <g stroke="#0033a0" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M22 44v6M32 44v8M42 44v6" style="animation: rain-drop 1.2s linear infinite"/>
+                        <path d="M26 50v6M38 50v6" style="animation: rain-drop 1.2s linear infinite 0.4s"/>
+                    </g>
+                </svg>`;
+            }
+            if (code >= 95) {
+                return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 36a10 10 0 0 1 0-20 12 12 0 0 1 22 4 9 9 0 0 1-2 16H20z" fill="#5a6b83"/>
+                    <path d="M30 40l-6 12h6l-4 10 12-14h-6l4-8z" fill="#fcd116" class="animate-flash"/>
+                </svg>`;
+            }
+            return `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="12" fill="#9eabc0"/>
+            </svg>`;
+        }
+
+        const STATUS_ICONS = {
+            NORMAL: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#36c275" opacity="0.15"/>
+                <path d="M8 12.5l2.5 2.5L16 9.5" stroke="#36c275" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`,
+            MONITORING: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#f2b84b" opacity="0.15"/>
+                <path d="M12 7v6M12 16v.5" stroke="#f2b84b" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#f2b84b" stroke-width="1.5" fill="none" opacity="0.5"/>
+            </svg>`,
+            SUSPENDED: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#f08b3a" opacity="0.15"/>
+                <rect x="8" y="8" width="8" height="8" rx="1" stroke="#f08b3a" stroke-width="2" fill="none"/>
+                <path d="M9 12h6" stroke="#f08b3a" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#f08b3a" stroke-width="1.5" fill="none" opacity="0.5"/>
+            </svg>`,
+            EMERGENCY: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#ef6262" opacity="0.2"/>
+                <path d="M12 6v8M12 17v.5" stroke="#ef6262" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#ef6262" stroke-width="2" fill="none"/>
+            </svg>`
+        };
+
+        const STATUS_COLORS = {
+            NORMAL: { badge: 'green', label: 'ACTIVE' },
+            MONITORING: { badge: 'yellow', label: 'MONITORING' },
+            SUSPENDED: { badge: 'orange', label: 'SUSPENDED' },
+            EMERGENCY: { badge: 'red', label: 'EMERGENCY' }
+        };
+
+        // DOM
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('date');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        const systemStatusEl = document.getElementById('systemStatus');
+
+        const weatherStatusEl = document.getElementById('weatherStatus');
+        const weatherTempEl = document.getElementById('weatherTemp');
+        const weatherConditionEl = document.getElementById('weatherCondition');
+        const weatherFeelsEl = document.getElementById('weatherFeels');
+        const weatherHumidityEl = document.getElementById('weatherHumidity');
+        const weatherWindEl = document.getElementById('weatherWind');
+        const weatherRainEl = document.getElementById('weatherRain');
+        const weatherVisibilityEl = document.getElementById('weatherVisibility');
+        const weatherSunEl = document.getElementById('weatherSun');
+        const weatherUVEl = document.getElementById('weatherUV');
+        const weatherUVHintEl = document.getElementById('weatherUVHint');
+        const weatherPressureEl = document.getElementById('weatherPressure');
+        const weatherPressureHintEl = document.getElementById('weatherPressureHint');
+        const weatherDewEl = document.getElementById('weatherDew');
+        const weatherDewHintEl = document.getElementById('weatherDewHint');
+        const weatherCloudsEl = document.getElementById('weatherClouds');
+        const weatherCloudsHintEl = document.getElementById('weatherCloudsHint');
+        const weatherSummaryTextEl = document.getElementById('weatherSummaryText');
+        const weatherIconEl = document.getElementById('weatherIcon');
+
+        const aqiBadgeEl = document.getElementById('aqiBadge');
+        const aqiValueEl = document.getElementById('aqiValue');
+        const aqiStatusEl = document.getElementById('aqiStatus');
+        const aqiDetailEl = document.getElementById('aqiDetail');
+
+        const eqContainer = document.getElementById('eqContainer');
+        const eqStatusEl = document.getElementById('eqStatus');
+
+        const newsList = document.getElementById('newsList');
+        const newsStatusEl = document.getElementById('newsStatus');
+
+        const parStrip = document.getElementById('parStrip');
+        const parStripIcon = document.getElementById('parStripIcon');
+        const parStripTitle = document.getElementById('parStripTitle');
+        const parStripSub = document.getElementById('parStripSub');
+
+        const schoolStatusWidget = document.getElementById('schoolStatusWidget');
+        const schoolStatusTitle = document.getElementById('schoolStatusTitle');
+        const schoolStatusBadge = document.getElementById('schoolStatusBadge');
+        const schoolStatusIcon = document.getElementById('schoolStatusIcon');
+        const schoolStatusMain = document.getElementById('schoolStatusMain');
+        const schoolStatusSub = document.getElementById('schoolStatusSub');
+        const schoolStatusOverride = document.getElementById('schoolStatusOverride');
+
+        const statusAdminModal = document.getElementById('statusAdminModal');
+        const statusAdminClose = document.getElementById('statusAdminClose');
+        const statusAdminSave = document.getElementById('statusAdminSave');
+        const statusAdminClear = document.getElementById('statusAdminClear');
+        const statusAdminExport = document.getElementById('statusAdminExport');
+        const statusAdminImportBtn = document.getElementById('statusAdminImportBtn');
+        const statusAdminImportFile = document.getElementById('statusAdminImportFile');
+        const fieldStatusState = document.getElementById('fieldStatusState');
+        const fieldStatusMessage = document.getElementById('fieldStatusMessage');
+        const fieldStatusAsOf = document.getElementById('fieldStatusAsOf');
+
+        const announcementTitle = document.getElementById('announcementTitle');
+        const dailyHeadline = document.getElementById('dailyHeadline');
+        const dailyBody = document.getElementById('dailyBody');
+        const announcementBadge = document.getElementById('announcementBadge');
+        const announcementHeadline = document.getElementById('announcementHeadline');
+        const announcementBody = document.getElementById('announcementBody');
+
+        const adminModal = document.getElementById('adminModal');
+        const adminClose = document.getElementById('adminClose');
+        const adminSave = document.getElementById('adminSave');
+        const adminExport = document.getElementById('adminExport');
+        const adminImportBtn = document.getElementById('adminImportBtn');
+        const adminImportFile = document.getElementById('adminImportFile');
+        const adminReset = document.getElementById('adminReset');
+        const fieldDailyHeadline = document.getElementById('fieldDailyHeadline');
+        const fieldDailyBody = document.getElementById('fieldDailyBody');
+        const fieldBadge = document.getElementById('fieldBadge');
+        const fieldHeadline = document.getElementById('fieldHeadline');
+        const fieldBody = document.getElementById('fieldBody');
+        const fieldDate = document.getElementById('fieldDate');
+
+        let latestEqFeatures = null;
+        let latestAQI = 42;
+
+        // CLOCK
+        function updateClock() {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString('en-PH', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            });
+            dateEl.textContent = now.toLocaleDateString('en-PH', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+        }
+
+        function setLastUpdate(date) {
+            lastUpdateEl.textContent = date.toLocaleTimeString('en-PH', {
+                hour: '2-digit', minute: '2-digit', hour12: true
+            });
+        }
+
+        function setSystemStatus(online) {
+            if (online) {
+                systemStatusEl.textContent = 'System Online';
+                systemStatusEl.classList.remove('offline');
+            } else {
+                systemStatusEl.textContent = 'Data Delayed';
+                systemStatusEl.classList.add('offline');
+            }
+        }
+
+        // AIR QUALITY
+        function setAirQuality(aqi, pm25) {
+            latestAQI = aqi;
+            let status, color;
+            if (aqi <= 50) { status = 'Good'; color = '#36c275'; }
+            else if (aqi <= 100) { status = 'Fair'; color = '#f2b84b'; }
+            else if (aqi <= 150) { status = 'Sensitive'; color = '#f2b84b'; }
+            else if (aqi <= 200) { status = 'Unhealthy'; color = '#ef6262'; }
+            else if (aqi <= 300) { status = 'Very Unhealthy'; color = '#a855f7'; }
+            else { status = 'Hazardous'; color = '#7f1d1d'; }
+
+            aqiValueEl.textContent = aqi;
+            aqiValueEl.style.color = color;
+            aqiStatusEl.textContent = status;
+            aqiStatusEl.style.color = color;
+            aqiDetailEl.textContent = pm25 + ' µg/m³';
+            if (aqiBadgeEl) aqiBadgeEl.style.borderLeftColor = color;
+
+            computeAndRenderSchoolStatus();
+        }
+
+        // SCHOOL STATUS
+        function loadStatusConfig() {
+            try {
+                const raw = localStorage.getItem(STATUS_STORAGE_KEY);
+                if (!raw) return { ...DEFAULT_STATUS };
+                const parsed = JSON.parse(raw);
+                return {
+                    state: parsed.state || '',
+                    message: parsed.message || '',
+                    asOfDate: parsed.asOfDate || ''
+                };
+            } catch {
+                return { ...DEFAULT_STATUS };
+            }
+        }
+
+        function saveStatusConfig(cfg) {
+            try {
+                localStorage.setItem(STATUS_STORAGE_KEY, JSON.stringify(cfg));
+            } catch (e) { console.warn('Could not save status:', e); }
+        }
+
+        function computeAutomaticStatus() {
+            if (latestEqFeatures && latestEqFeatures.length > 0) {
+                const cutoff = Date.now() - (EQ_LOOKBACK_HOURS * 60 * 60 * 1000);
+                for (const f of latestEqFeatures) {
+                    const time = f.properties.time;
+                    const mag = f.properties.mag || 0;
+                    if (time < cutoff) continue;
+                    if (mag < EQ_MIN_MAG_TRIGGER) continue;
+
+                    const coords = f.geometry.coordinates;
+                    const dist = distanceKm(LATITUDE, LONGITUDE, coords[1], coords[0]);
+                    if (dist <= EQ_PROXIMITY_KM) {
+                        return {
+                            state: 'MONITORING',
+                            message: `M${mag.toFixed(1)} earthquake felt ${Math.round(dist)} km away. Monitoring situation.`,
+                            asOfDate: '',
+                            auto: true
+                        };
+                    }
+                }
+            }
+
+            if (latestAQI >= AQI_MONITORING_THRESHOLD) {
+                return {
+                    state: 'MONITORING',
+                    message: `Air quality is ${latestAQI} (unhealthy for sensitive groups). Limit outdoor activities.`,
+                    asOfDate: '',
+                    auto: true
+                };
+            }
+
+            return {
+                state: 'NORMAL',
+                message: 'Classes ongoing. No active emergency.',
+                asOfDate: '',
+                auto: true
+            };
+        }
+
+        function computeAndRenderSchoolStatus() {
+            const manual = loadStatusConfig();
+            const auto = computeAutomaticStatus();
+
+            const finalState = manual.state || auto.state;
+            const isManual = !!manual.state;
+            const finalMessage = isManual
+                ? (manual.message || 'Manual status set by DRRM coordinator.')
+                : auto.message;
+
+            renderSchoolStatus(finalState, finalMessage, isManual, manual.asOfDate);
+        }
+
+        function renderSchoolStatus(state, message, isManual, asOfDate) {
+            schoolStatusWidget.setAttribute('data-state', state);
+
+            const meta = STATUS_COLORS[state] || STATUS_COLORS.NORMAL;
+            schoolStatusBadge.innerHTML = `<span class="status-dot ${meta.badge}"></span>${meta.label}`;
+
+            schoolStatusIcon.innerHTML = STATUS_ICONS[state] || STATUS_ICONS.NORMAL;
+            schoolStatusMain.textContent = state;
+
+            let sub = message || '';
+            if (asOfDate) {
+                try {
+                    const d = new Date(asOfDate + 'T00:00:00');
+                    const formatted = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                    sub = sub ? `${sub} · As of ${formatted}` : `As of ${formatted}`;
+                } catch {}
+            }
+            schoolStatusSub.textContent = sub;
+
+            if (isManual) {
+                schoolStatusOverride.classList.add('active');
+            } else {
+                schoolStatusOverride.classList.remove('active');
+            }
+        }
+
+        // EARTHQUAKE
+        async function fetchEarthquakes() {
+            const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
+                + '?format=geojson'
+                + '&starttime=' + getStartTime()
+                + '&minmagnitude=2.5'
+                + '&minlatitude=' + PH_BOUNDS.minlatitude
+                + '&maxlatitude=' + PH_BOUNDS.maxlatitude
+                + '&minlongitude=' + PH_BOUNDS.minlongitude
+                + '&maxlongitude=' + PH_BOUNDS.maxlongitude
+                + '&orderby=time'
+                + '&limit=3';
+
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                const features = data.features || [];
+                latestEqFeatures = features;
+
+                computeAndRenderSchoolStatus();
+
+                if (features.length === 0) {
+                    eqStatusEl.innerHTML = '<span class="status-dot green"></span>NORMAL';
+                    eqContainer.innerHTML = `
+                        <div style="color:var(--success);font-weight:700;font-size:clamp(1.1rem,1.4vw,1.5rem);">No Recent Events</div>
+                        <div style="color:var(--muted);font-size:clamp(0.8rem,0.95vw,1.1rem);margin-top:0.5vh;">
+                            No earthquakes M2.5+ recorded in the Philippine region in the last 7 days.
+                        </div>`;
+                    return;
+                }
+
+                const maxMag = Math.max(...features.map(f => f.properties.mag || 0));
+                let statusText = 'NORMAL';
+                let statusClass = 'green';
+                if (maxMag >= 5.0) { statusText = 'SIGNIFICANT'; statusClass = 'red'; }
+                else if (maxMag >= 4.0) { statusText = 'MODERATE'; statusClass = 'yellow'; }
+
+                eqStatusEl.innerHTML = `<span class="status-dot ${statusClass}"></span>${statusText}`;
+
+                eqContainer.innerHTML = '<div class="eq-list">' + features.map(f => {
+                    const props = f.properties;
+                    const coords = f.geometry.coordinates;
+                    const mag = props.mag;
+                    const place = props.place || 'Philippines region';
+                    const depth = coords[2];
+                    const time = new Date(props.time);
+
+                    let magColor = 'var(--success)';
+                    if (mag >= 5.0) magColor = 'var(--danger)';
+                    else if (mag >= 4.0) magColor = 'var(--warning)';
+
+                    return `
+                        <div class="eq-row">
+                            <div class="eq-row-top">
+                                <span class="eq-mag" style="color:${magColor};">M ${mag.toFixed(1)}</span>
+                                <span class="eq-time">${time.toLocaleString('en-PH', {
+                                    month: 'short', day: 'numeric',
+                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                })}</span>
+                            </div>
+                            <div class="eq-place">${place}</div>
+                            <div class="eq-meta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v20M2 12h20"/>
+                                </svg>
+                                Depth: ${depth.toFixed(1)} km
+                            </div>
+                        </div>`;
+                }).join('') + '</div>';
+
+            } catch (error) {
+                console.error('Earthquake fetch failed:', error);
+                eqStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
+                eqContainer.innerHTML = `
+                    <div style="color:var(--muted);font-weight:700;font-size:clamp(1.1rem,1.4vw,1.5rem);">Data Unavailable</div>
+                    <div style="color:var(--muted);font-size:clamp(0.8rem,0.95vw,1.1rem);margin-top:0.5vh;">
+                        Unable to fetch seismic data. Will retry automatically.
+                    </div>`;
+            }
+        }
+
+        function getStartTime() {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            return d.toISOString().split('T')[0];
+        }
+
+        // NEWS
+        async function fetchNews() {
+            try {
+                const url = RSS2JSON_URL + encodeURIComponent(PHILSTAR_RSS);
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const data = await response.json();
+                if (data.status !== 'ok' || !data.items || data.items.length === 0) {
+                    throw new Error('No news items returned');
+                }
+
+                const headlines = data.items.slice(0, 3);
+                newsList.innerHTML = headlines.map(item => {
+                    const title = item.title || 'Untitled';
+                    const ago = timeAgo(item.pubDate);
+                    const link = item.link || '#';
+
+                    return `
+                        <a class="news-item" href="${link}" target="_blank" rel="noopener">
+                            <div class="news-headline">${title}</div>
+                            <div class="news-meta">
+                                <span class="news-source">Philstar</span>
+                                ${ago ? '<span>·</span><span>' + ago + '</span>' : ''}
+                            </div>
+                        </a>`;
+                }).join('');
+
+                newsStatusEl.innerHTML = '<span class="status-dot green"></span>LIVE';
+
+            } catch (error) {
+                console.error('News fetch failed:', error);
+                newsStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
+                newsList.innerHTML = `<div class="news-loading">News headlines temporarily unavailable.</div>`;
+            }
+        }
+
+        // PAR STRIP
+        function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo) {
+            if (hasTyphoon) {
+                parStrip.classList.remove('clear');
+                parStripIcon.innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
+                        <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+                        <path d="M44 14 A20 20 0 0 1 56 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                        <path d="M20 50 A20 20 0 0 1 8 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    </svg>`;
+                parStripTitle.textContent = typhoonInfo.name;
+                parStripSub.innerHTML = `${typhoonInfo.location} · <strong>${typhoonInfo.wind} km/h</strong> max winds`;
+            } else if (hasLPA) {
+                parStrip.classList.remove('clear');
+                parStripIcon.innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="14" fill="#4da3ff" opacity="0.15"/>
+                        <path d="M32 18 A14 14 0 0 1 46 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M32 46 A14 14 0 0 1 18 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+                        <circle cx="32" cy="32" r="5" fill="#4da3ff"/>
+                    </svg>`;
+                parStripTitle.textContent = 'Low Pressure Area';
+                parStripSub.innerHTML = lpaInfo || 'LPA being monitored inside PAR.';
+            } else {
+                parStrip.classList.add('clear');
+                parStripIcon.innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/>
+                        <path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                parStripTitle.textContent = 'No Typhoon or LPA in PAR';
+                parStripSub.innerHTML = 'Philippine Area of Responsibility is clear. Continue monitoring PAGASA bulletins.';
+            }
+        }
+
+        // WEATHER
+        async function fetchWeather() {
+            const url = 'https://api.open-meteo.com/v1/forecast'
+                + '?latitude=' + LATITUDE
+                + '&longitude=' + LONGITUDE
+                + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code,precipitation_probability,visibility,surface_pressure,dew_point_2m,cloud_cover'
+                + '&daily=sunrise,sunset,uv_index_max'
+                + '&timezone=' + encodeURIComponent(TIMEZONE)
+                + '&forecast_days=1';
+
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const data = await response.json();
+                const current = data.current;
+                const daily = data.daily || {};
+
+                weatherTempEl.textContent = Math.round(current.temperature_2m) + '°';
+                const code = current.weather_code;
+                weatherConditionEl.textContent = WMO_CODES[code] || 'Unknown';
+                weatherIconEl.innerHTML = getWeatherIcon(code);
+                weatherFeelsEl.textContent = 'Feels like ' + Math.round(current.apparent_temperature) + '°C';
+                weatherHumidityEl.textContent = Math.round(current.relative_humidity_2m) + '%';
+                weatherWindEl.textContent = Math.round(current.wind_speed_10m) + ' km/h';
+
+                if (current.precipitation_probability != null) {
+                    weatherRainEl.textContent = Math.round(current.precipitation_probability) + '%';
+                } else { weatherRainEl.textContent = '—%'; }
+
+                if (current.visibility != null) {
+                    weatherVisibilityEl.textContent = (current.visibility / 1000).toFixed(1) + ' km';
+                } else { weatherVisibilityEl.textContent = '— km'; }
+
+                if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
+                    const sunrise = new Date(daily.sunrise[0]);
+                    const sunset = new Date(daily.sunset[0]);
+                    const fmt = (d) => d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    weatherSunEl.textContent = fmt(sunrise) + ' / ' + fmt(sunset);
+                } else { weatherSunEl.textContent = '— / —'; }
+
+                const uv = daily.uv_index_max ? daily.uv_index_max[0] : null;
+                if (uv != null) {
+                    weatherUVEl.textContent = Math.round(uv);
+                    weatherUVHintEl.textContent = uvDescription(uv);
+                } else {
+                    weatherUVEl.textContent = '—';
+                    weatherUVHintEl.textContent = 'Not available.';
+                }
+
+                const pressure = current.surface_pressure;
+                if (pressure != null) {
+                    weatherPressureEl.textContent = Math.round(pressure) + ' hPa';
+                    weatherPressureHintEl.textContent = pressureHint(pressure);
+                } else {
+                    weatherPressureEl.textContent = '— hPa';
+                    weatherPressureHintEl.textContent = 'Not available.';
+                }
+
+                const dew = current.dew_point_2m;
+                if (dew != null) {
+                    weatherDewEl.textContent = Math.round(dew) + '°C';
+                    weatherDewHintEl.textContent = dewPointHint(dew, current.temperature_2m);
+                } else {
+                    weatherDewEl.textContent = '—°C';
+                    weatherDewHintEl.textContent = 'Not available.';
+                }
+
+                const clouds = current.cloud_cover;
+                if (clouds != null) {
+                    weatherCloudsEl.textContent = Math.round(clouds) + '%';
+                    weatherCloudsHintEl.textContent = cloudHint(clouds);
+                } else {
+                    weatherCloudsEl.textContent = '—%';
+                    weatherCloudsHintEl.textContent = 'Not available.';
+                }
+
+                weatherSummaryTextEl.textContent = buildWeatherSummary(current, daily);
+
+                weatherStatusEl.innerHTML = '<span class="status-dot green"></span>LIVE';
+                setSystemStatus(true);
+                setLastUpdate(new Date());
+
+            } catch (error) {
+                console.error('Weather fetch failed:', error);
+                weatherConditionEl.textContent = 'Data unavailable';
+                weatherSummaryTextEl.textContent = 'Unable to load weather summary.';
+                weatherStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
+                setSystemStatus(false);
+            }
+        }
+
+        // ANNOUNCEMENT — Local
+        function loadAnnouncementConfig() {
+            try {
+                const raw = localStorage.getItem(ANNOUNCEMENT_STORAGE_KEY);
+                if (!raw) return JSON.parse(JSON.stringify(DEFAULT_ANNOUNCEMENT));
+                const parsed = JSON.parse(raw);
+
+                if (parsed.headline && !parsed.event) {
+                    return {
+                        today: { ...DEFAULT_ANNOUNCEMENT.today },
+                        event: {
+                            badge: parsed.badge || DEFAULT_ANNOUNCEMENT.event.badge,
+                            headline: parsed.headline || DEFAULT_ANNOUNCEMENT.event.headline,
+                            body: parsed.body || DEFAULT_ANNOUNCEMENT.event.body,
+                            asOfDate: parsed.asOfDate || ''
+                        }
+                    };
+                }
+
+                return {
+                    today: {
+                        headline: parsed.today?.headline || DEFAULT_ANNOUNCEMENT.today.headline,
+                        body: parsed.today?.body || DEFAULT_ANNOUNCEMENT.today.body
+                    },
+                    event: {
+                        badge: parsed.event?.badge || DEFAULT_ANNOUNCEMENT.event.badge,
+                        headline: parsed.event?.headline || DEFAULT_ANNOUNCEMENT.event.headline,
+                        body: parsed.event?.body || DEFAULT_ANNOUNCEMENT.event.body,
+                        asOfDate: parsed.event?.asOfDate || ''
+                    }
+                };
+            } catch {
+                return JSON.parse(JSON.stringify(DEFAULT_ANNOUNCEMENT));
+            }
+        }
+
+        function saveAnnouncementConfig(cfg) {
+            try {
+                localStorage.setItem(ANNOUNCEMENT_STORAGE_KEY, JSON.stringify(cfg));
+            } catch (e) { console.warn('Could not save announcement:', e); }
+        }
+
+        function renderAnnouncement(cfg) {
+            dailyHeadline.textContent = cfg.today.headline || DEFAULT_ANNOUNCEMENT.today.headline;
+            dailyBody.textContent = cfg.today.body || DEFAULT_ANNOUNCEMENT.today.body;
+
+            announcementBadge.textContent = cfg.event.badge || DEFAULT_ANNOUNCEMENT.event.badge;
+            announcementHeadline.textContent = cfg.event.headline || DEFAULT_ANNOUNCEMENT.event.headline;
+            announcementBody.textContent = cfg.event.body || DEFAULT_ANNOUNCEMENT.event.body;
+
+            if (cfg.event.asOfDate) {
+                try {
+                    const d = new Date(cfg.event.asOfDate + 'T00:00:00');
+                    const formatted = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                    announcementBadge.textContent = (cfg.event.badge || 'Upcoming Event') + ' · ' + formatted;
+                } catch {}
+            }
+        }
+
+        // REMOTE ANNOUNCEMENT FETCH
+        async function fetchAnnouncementRemote() {
+            try {
+                const response = await fetch(ANNOUNCEMENT_REMOTE_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const remoteCfg = await response.json();
+
+                if (!remoteCfg || typeof remoteCfg !== 'object') {
+                    throw new Error('Invalid announcement JSON');
+                }
+                if (!remoteCfg.today || !remoteCfg.event) {
+                    throw new Error('Missing today or event section');
+                }
+
+                const cfg = {
+                    today: {
+                        headline: (remoteCfg.today.headline || DEFAULT_ANNOUNCEMENT.today.headline).toString().slice(0, 120),
+                        body: (remoteCfg.today.body || DEFAULT_ANNOUNCEMENT.today.body).toString().slice(0, 400)
+                    },
+                    event: {
+                        badge: (remoteCfg.event.badge || DEFAULT_ANNOUNCEMENT.event.badge).toString().slice(0, 40),
+                        headline: (remoteCfg.event.headline || DEFAULT_ANNOUNCEMENT.event.headline).toString().slice(0, 100),
+                        body: (remoteCfg.event.body || DEFAULT_ANNOUNCEMENT.event.body).toString().slice(0, 500),
+                        asOfDate: (remoteCfg.event.asOfDate || '').toString()
+                    }
+                };
+
+                saveAnnouncementConfig(cfg);
+                renderAnnouncement(cfg);
+                console.log('[Announcement] Updated from GitHub at', new Date().toLocaleTimeString());
+
+            } catch (error) {
+                console.warn('[Announcement] Remote fetch failed, using cached version:', error.message);
+                const cached = loadAnnouncementConfig();
+                renderAnnouncement(cached);
+            }
+        }
+
+        // REMOTE STATUS FETCH
+        async function fetchStatusRemote() {
+            try {
+                const response = await fetch(STATUS_REMOTE_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const remoteCfg = await response.json();
+
+                if (!remoteCfg || typeof remoteCfg !== 'object') {
+                    throw new Error('Invalid status JSON');
+                }
+
+                const cfg = {
+                    state: (remoteCfg.state || '').toString(),
+                    message: (remoteCfg.message || '').toString().slice(0, 300),
+                    asOfDate: (remoteCfg.asOfDate || '').toString()
+                };
+
+                const validStates = ['', 'NORMAL', 'MONITORING', 'SUSPENDED', 'EMERGENCY'];
+                if (!validStates.includes(cfg.state)) {
+                    cfg.state = '';
+                }
+
+                saveStatusConfig(cfg);
+                computeAndRenderSchoolStatus();
+                console.log('[Status] Updated from GitHub at', new Date().toLocaleTimeString());
+
+            } catch (error) {
+                console.warn('[Status] Remote fetch failed, using cached version:', error.message);
+                computeAndRenderSchoolStatus();
+            }
+        }
+
+        // LONG-PRESS HANDLER
+        function attachLongPress(el, callback) {
+            let timer = null;
+            const LONG_PRESS_MS = 3000;
+
+            function start(e) {
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                cancel();
+                timer = setTimeout(() => {
+                    timer = null;
+                    callback();
+                }, LONG_PRESS_MS);
+            }
+
+            function cancel() {
+                if (timer) { clearTimeout(timer); timer = null; }
+            }
+
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', cancel);
+            el.addEventListener('mouseleave', cancel);
+            el.addEventListener('touchstart', start, { passive: true });
+            el.addEventListener('touchend', cancel);
+            el.addEventListener('touchcancel', cancel);
+            el.addEventListener('dragstart', (e) => e.preventDefault());
+        }
+
+        attachLongPress(schoolStatusTitle, openStatusAdminModal);
+        attachLongPress(announcementTitle, openAdminModal);
+
+        // STATUS ADMIN MODAL
+        function openStatusAdminModal() {
+            const cfg = loadStatusConfig();
+            fieldStatusState.value = cfg.state || '';
+            fieldStatusMessage.value = cfg.message || '';
+            fieldStatusAsOf.value = cfg.asOfDate || '';
+
+            statusAdminModal.classList.add('show');
+            schoolStatusTitle.classList.add('admin-active');
+        }
+
+        function closeStatusAdminModal() {
+            statusAdminModal.classList.remove('show');
+            schoolStatusTitle.classList.remove('admin-active');
+        }
+
+        statusAdminClose.addEventListener('click', closeStatusAdminModal);
+        statusAdminModal.addEventListener('click', (e) => {
+            if (e.target === statusAdminModal) closeStatusAdminModal();
+        });
+
+        statusAdminSave.addEventListener('click', () => {
+            const cfg = {
+                state: fieldStatusState.value || '',
+                message: fieldStatusMessage.value.trim() || '',
+                asOfDate: fieldStatusAsOf.value || ''
+            };
+            saveStatusConfig(cfg);
+            computeAndRenderSchoolStatus();
+            closeStatusAdminModal();
+        });
+
+        statusAdminClear.addEventListener('click', () => {
+            localStorage.removeItem(STATUS_STORAGE_KEY);
+            fieldStatusState.value = '';
+            fieldStatusMessage.value = '';
+            fieldStatusAsOf.value = '';
+            computeAndRenderSchoolStatus();
+            closeStatusAdminModal();
+        });
+
+        statusAdminExport.addEventListener('click', () => {
+            const cfg = {
+                state: fieldStatusState.value || '',
+                message: fieldStatusMessage.value.trim() || '',
+                asOfDate: fieldStatusAsOf.value || ''
+            };
+            const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'school_status.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        statusAdminImportBtn.addEventListener('click', () => statusAdminImportFile.click());
+
+        statusAdminImportFile.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const parsed = JSON.parse(ev.target.result);
+                    fieldStatusState.value = parsed.state || '';
+                    fieldStatusMessage.value = (parsed.message || '').toString().slice(0, 300);
+                    fieldStatusAsOf.value = parsed.asOfDate || '';
+                } catch {}
+            };
+            reader.readAsText(file);
+            statusAdminImportFile.value = '';
+        });
+
+        // ANNOUNCEMENT ADMIN MODAL
+        function openAdminModal() {
+            const cfg = loadAnnouncementConfig();
+            fieldDailyHeadline.value = cfg.today.headline;
+            fieldDailyBody.value = cfg.today.body;
+            fieldBadge.value = cfg.event.badge;
+            fieldHeadline.value = cfg.event.headline;
+            fieldBody.value = cfg.event.body;
+            fieldDate.value = cfg.event.asOfDate || '';
+
+            adminModal.classList.add('show');
+            announcementTitle.classList.add('admin-active');
+        }
+
+        function closeAdminModal() {
+            adminModal.classList.remove('show');
+            announcementTitle.classList.remove('admin-active');
+        }
+
+        adminClose.addEventListener('click', closeAdminModal);
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) closeAdminModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (adminModal.classList.contains('show')) closeAdminModal();
+                if (statusAdminModal.classList.contains('show')) closeStatusAdminModal();
+            }
+        });
+
+        adminSave.addEventListener('click', () => {
+            const cfg = {
+                today: {
+                    headline: fieldDailyHeadline.value.trim() || DEFAULT_ANNOUNCEMENT.today.headline,
+                    body: fieldDailyBody.value.trim() || DEFAULT_ANNOUNCEMENT.today.body
+                },
+                event: {
+                    badge: fieldBadge.value.trim() || DEFAULT_ANNOUNCEMENT.event.badge,
+                    headline: fieldHeadline.value.trim() || DEFAULT_ANNOUNCEMENT.event.headline,
+                    body: fieldBody.value.trim() || DEFAULT_ANNOUNCEMENT.event.body,
+                    asOfDate: fieldDate.value || ''
+                }
+            };
+            saveAnnouncementConfig(cfg);
+            renderAnnouncement(cfg);
+            closeAdminModal();
+        });
+
+        adminExport.addEventListener('click', () => {
+            const cfg = {
+                today: {
+                    headline: fieldDailyHeadline.value.trim() || DEFAULT_ANNOUNCEMENT.today.headline,
+                    body: fieldDailyBody.value.trim() || DEFAULT_ANNOUNCEMENT.today.body
+                },
+                event: {
+                    badge: fieldBadge.value.trim() || DEFAULT_ANNOUNCEMENT.event.badge,
+                    headline: fieldHeadline.value.trim() || DEFAULT_ANNOUNCEMENT.event.headline,
+                    body: fieldBody.value.trim() || DEFAULT_ANNOUNCEMENT.event.body,
+                    asOfDate: fieldDate.value || ''
+                }
+            };
+            const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'announcement.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        adminImportBtn.addEventListener('click', () => adminImportFile.click());
+
+        adminImportFile.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const parsed = JSON.parse(ev.target.result);
+                    let cfg;
+                    if (parsed.event || parsed.today) {
+                        cfg = {
+                            today: {
+                                headline: (parsed.today?.headline || DEFAULT_ANNOUNCEMENT.today.headline).toString().slice(0, 120),
+                                body: (parsed.today?.body || DEFAULT_ANNOUNCEMENT.today.body).toString().slice(0, 400)
+                            },
+                            event: {
+                                badge: (parsed.event?.badge || DEFAULT_ANNOUNCEMENT.event.badge).toString().slice(0, 40),
+                                headline: (parsed.event?.headline || DEFAULT_ANNOUNCEMENT.event.headline).toString().slice(0, 100),
+                                body: (parsed.event?.body || DEFAULT_ANNOUNCEMENT.event.body).toString().slice(0, 500),
+                                asOfDate: (parsed.event?.asOfDate || '').toString()
+                            }
+                        };
+                    } else {
+                        cfg = {
+                            today: { ...DEFAULT_ANNOUNCEMENT.today },
+                            event: {
+                                badge: (parsed.badge || DEFAULT_ANNOUNCEMENT.event.badge).toString().slice(0, 40),
+                                headline: (parsed.headline || DEFAULT_ANNOUNCEMENT.event.headline).toString().slice(0, 100),
+                                body: (parsed.body || DEFAULT_ANNOUNCEMENT.event.body).toString().slice(0, 500),
+                                asOfDate: (parsed.asOfDate || '').toString()
+                            }
+                        };
+                    }
+
+                    fieldDailyHeadline.value = cfg.today.headline;
+                    fieldDailyBody.value = cfg.today.body;
+                    fieldBadge.value = cfg.event.badge;
+                    fieldHeadline.value = cfg.event.headline;
+                    fieldBody.value = cfg.event.body;
+                    fieldDate.value = cfg.event.asOfDate;
+                } catch {}
+            };
+            reader.readAsText(file);
+            adminImportFile.value = '';
+        });
+
+        adminReset.addEventListener('click', () => {
+            if (!confirm('Reset announcement to defaults?')) return;
+            localStorage.removeItem(ANNOUNCEMENT_STORAGE_KEY);
+            const cfg = JSON.parse(JSON.stringify(DEFAULT_ANNOUNCEMENT));
+            renderAnnouncement(cfg);
+            fieldDailyHeadline.value = cfg.today.headline;
+            fieldDailyBody.value = cfg.today.body;
+            fieldBadge.value = cfg.event.badge;
+            fieldHeadline.value = cfg.event.headline;
+            fieldBody.value = cfg.event.body;
+            fieldDate.value = '';
+        });
+
+        // INIT
+        function init() {
+            updateClock();
+
+            // Show cached content first, then fetch remote
+            const cachedAnnouncement = loadAnnouncementConfig();
+            renderAnnouncement(cachedAnnouncement);
+            fetchAnnouncementRemote();
+
+            computeAndRenderSchoolStatus();
+            fetchStatusRemote();
+
+            fetchWeather();
+            fetchEarthquakes();
+            fetchNews();
+            setAirQuality(42, 18);
+
+            updatePARStrip(
+                true,
+                { name: 'Super Typhoon Choi-wan', wind: 195, location: 'Outside PAR · 2,605 km East of Extreme Northern Luzon' },
+                false, null
+            );
+
+            setInterval(updateClock, 1000);
+            setInterval(fetchWeather, WEATHER_REFRESH_MS);
+            setInterval(fetchEarthquakes, EQ_REFRESH_MS);
+            setInterval(fetchNews, NEWS_REFRESH_MS);
+            setInterval(fetchAnnouncementRemote, ANNOUNCEMENT_REFRESH_MS);
+            setInterval(fetchStatusRemote, STATUS_REFRESH_MS);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+</script>
+</body>
+</html>
