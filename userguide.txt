@@ -262,6 +262,66 @@ EXAMPLE — Clear skies (no typhoon, no LPA)
 PRIORITY: If both hasTyphoon and hasLPA are true, the typhoon
 banner takes precedence (typhoons are the more urgent alert).
 
+----------------------------------------------------------------
+  FILE 3b: ITCZ SUPPORT (added to par_status.json)
+----------------------------------------------------------------
+
+  ITCZ fields are optional. If omitted or false, no ITCZ is shown.
+  ITCZ can display ALONGSIDE a typhoon or LPA — it appears as a
+  second row in the same PAR strip.
+
+  hasITCZ         (boolean: true or false)
+    Set to true to show the ITCZ row.
+
+  itczInfo.place       (string, max 120 chars)
+    Affected areas.
+    Example: "The eastern sections of Visayas and Mindanao"
+
+  itczInfo.speed       (string, max 60 chars)
+    Wind speed description.
+    Example: "Light to Moderate", "Moderate to Strong"
+
+  itczInfo.direction   (string, max 60 chars)
+    Wind direction.
+    Example: "Northeast to Northwest", "Southwest to Southeast"
+
+EXAMPLE — ITCZ only (no typhoon, no LPA)
+{
+  "hasTyphoon": false,
+  "typhoonInfo": { "name": "", "wind": 0, "location": "" },
+  "hasLPA": false,
+  "lpaInfo": "",
+  "hasITCZ": true,
+  "itczInfo": {
+    "place": "The eastern sections of Visayas and Mindanao",
+    "speed": "Light to Moderate",
+    "direction": "Northeast to Northwest"
+  }
+}
+
+EXAMPLE — Typhoon AND ITCZ together
+{
+  "hasTyphoon": true,
+  "typhoonInfo": {
+    "name": "Typhoon Queenie",
+    "wind": 150,
+    "location": "Inside PAR · 450 km East of Catarman"
+  },
+  "hasLPA": false,
+  "lpaInfo": "",
+  "hasITCZ": true,
+  "itczInfo": {
+    "place": "Eastern Visayas and Mindanao",
+    "speed": "Light to Moderate",
+    "direction": "Northeast to Northwest"
+  }
+}
+
+  Display order (top to bottom):
+    1. Typhoon or LPA  (whichever is active)
+    2. ITCZ            (if hasITCZ is true)
+  If neither is active, the strip shows the green "clear" state.
+
 ================================================================
   EMERGENCY: LOCAL LONG-PRESS ADMIN PANEL
 ================================================================
