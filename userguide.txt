@@ -1,0 +1,340 @@
+================================================================
+  ANTIPOLO ES DRRM DASHBOARD — USER GUIDE
+  For the Admin managing remote JSON files on GitHub
+================================================================
+
+This guide explains how to edit the three JSON files that the
+dashboard fetches from GitHub every hour:
+
+  1. announcement.json    — Today's announcement + Upcoming event
+  2. school_status.json   — School Status override (Normal/Monitoring/...)
+  3. par_status.json      — PAR Weather Alert (Typhoon/LPA)
+
+----------------------------------------------------------------
+  IMPORTANT: JSON RULES
+----------------------------------------------------------------
+- Do NOT add comments (// or /* */). JSON does not allow comments.
+- Every string value must be wrapped in double quotes " ".
+- Every field must be separated by a comma, EXCEPT the last one.
+- Booleans are true or false — no quotes.
+- Numbers are plain, e.g. 195 — no quotes.
+- An empty string is "" (two quotes, no space).
+- If you make a typo, the dashboard will ignore the file and
+  fall back to safe defaults until you fix it.
+- Validate your JSON at https://jsonlint.com before committing.
+
+----------------------------------------------------------------
+  HOW THE ADMIN UPDATES ANY FILE
+----------------------------------------------------------------
+1. Open the file on GitHub (from any phone, tablet, or PC).
+2. Click the pencil icon (Edit this file).
+3. Make your changes.
+4. Scroll down, click "Commit changes".
+5. The dashboard picks up the change within ~1 hour
+   (GitHub CDN cache ~5 min + dashboard poll up to 60 min).
+
+================================================================
+  FILE 1: announcement.json
+================================================================
+
+PURPOSE
+  Displays two sections on the School Announcement card:
+    Top    — "Today's Announcement"   (daily message)
+    Bottom — "Upcoming Event"          (event with badge)
+
+FULL TEMPLATE
+----------------------------------------------------------------
+{
+  "today": {
+    "headline": "No announcements for today.",
+    "body": "Please check back later or refer to your class adviser."
+  },
+  "event": {
+    "badge": "Upcoming Event",
+    "headline": "Portfolio Day this Friday",
+    "body": "Parents and guardians are encouraged to attend.",
+    "asOfDate": ""
+  }
+}
+----------------------------------------------------------------
+
+FIELD REFERENCE
+
+  today.headline  (string, max 120 chars)
+    The bold headline for today's message.
+    Example: "Classes resume tomorrow at 7:30 AM"
+
+  today.body      (string, max 400 chars)
+    The descriptive paragraph under the headline.
+    Example: "All grade levels follow the regular schedule."
+
+  event.badge     (string, max 40 chars)
+    The small tag above the event headline.
+    Example: "Upcoming Event", "Reminder", "Postponed"
+
+  event.headline  (string, max 100 chars)
+    The bold event title.
+
+  event.body      (string, max 500 chars)
+    The descriptive paragraph for the event.
+
+  event.asOfDate  (string, format YYYY-MM-DD, or "")
+    Optional. If set, the badge shows the date appended.
+    Example: "2026-10-10" shows "Upcoming Event · Oct 10"
+
+EXAMPLE — Suspension day
+----------------------------------------------------------------
+{
+  "today": {
+    "headline": "Classes suspended today",
+    "body": "Due to Typhoon Queenie. Resume tomorrow, Oct 11."
+  },
+  "event": {
+    "badge": "Reminder",
+    "headline": "Portfolio Day moved to Oct 18",
+    "body": "New date due to weather. Parents will be notified.",
+    "asOfDate": "2026-10-18"
+  }
+}
+----------------------------------------------------------------
+
+================================================================
+  FILE 2: school_status.json
+================================================================
+
+PURPOSE
+  Overrides the automatic School Status. When this file has a
+  non-empty "state", it wins over any auto-detected status.
+
+  AUTO STATES (no override needed):
+    - NORMAL       when no threat detected
+    - MONITORING   when M5.0+ quake within 150 km in last 24h
+                   OR air quality AQI >= 101
+
+  MANUAL STATES (set via this file or the local admin panel):
+    NORMAL, MONITORING, SUSPENDED, EMERGENCY
+
+FULL TEMPLATE
+----------------------------------------------------------------
+{
+  "state": "",
+  "message": "",
+  "asOfDate": ""
+}
+----------------------------------------------------------------
+
+FIELD REFERENCE
+
+  state           (string, must be exact)
+    One of the following, ALL UPPERCASE:
+      ""            — Automatic (no override; recommended default)
+      "NORMAL"      — Green.  No active threat
+      "MONITORING"  — Yellow. Potential threat nearby
+      "SUSPENDED"   — Orange. Classes officially suspended
+      "EMERGENCY"   — Red.    Active incident on campus
+
+    Any other value is ignored and treated as "" (automatic).
+
+  message         (string, max 300 chars)
+    The paragraph shown under the status label.
+    Example: "Classes suspended until Oct 8 due to Typhoon Queenie."
+    Leave as "" to use the automatic message.
+
+  asOfDate        (string, format YYYY-MM-DD, or "")
+    Optional. Shown as "As of Oct 8" appended to the message.
+    Example: "2026-10-08"
+
+EXAMPLE — Suspension active
+----------------------------------------------------------------
+{
+  "state": "SUSPENDED",
+  "message": "Classes suspended until Oct 8. Monitor PAGASA bulletins.",
+  "asOfDate": "2026-10-06"
+}
+----------------------------------------------------------------
+
+EXAMPLE — Emergency on campus
+----------------------------------------------------------------
+{
+  "state": "EMERGENCY",
+  "message": "Lockdown in effect. All students and staff remain indoors.",
+  "asOfDate": ""
+}
+----------------------------------------------------------------
+
+TO RETURN TO AUTOMATIC:
+  Set "state" back to "" (empty string). The dashboard will
+  immediately resume auto-detecting from earthquakes and AQI.
+
+================================================================
+  FILE 3: par_status.json
+================================================================
+
+PURPOSE
+  Displays the PAR Weather Alert strip inside the Live Weather
+  card. Shows one of three states:
+    - Typhoon in/near PAR     (red)
+    - LPA being monitored     (blue)
+    - Clear                   (green)
+
+FULL TEMPLATE
+----------------------------------------------------------------
+{
+  "hasTyphoon": false,
+  "typhoonInfo": {
+    "name": "",
+    "wind": 0,
+    "location": ""
+  },
+  "hasLPA": false,
+  "lpaInfo": ""
+}
+----------------------------------------------------------------
+
+FIELD REFERENCE
+
+  hasTyphoon      (boolean: true or false, no quotes)
+    Set to true to show the typhoon banner.
+    Set to false to hide it.
+
+  typhoonInfo.name       (string, max 60 chars)
+    The typhoon's local name.
+    Example: "Typhoon Queenie", "Super Typhoon Choi-wan"
+
+  typhoonInfo.wind       (number, no quotes)
+    Maximum sustained wind speed in km/h.
+    Example: 195
+
+  typhoonInfo.location   (string, max 120 chars)
+    Position and direction.
+    Example: "Outside PAR · 2,605 km East of Extreme Northern Luzon"
+
+  hasLPA          (boolean: true or false)
+    Set to true to show the LPA banner.
+    Only shown if hasTyphoon is false.
+
+  lpaInfo         (string, max 200 chars)
+    LPA description.
+    Example: "LPA 200 km West of Puerto Princesa, Palawan."
+
+EXAMPLE — Typhoon approaching
+----------------------------------------------------------------
+{
+  "hasTyphoon": true,
+  "typhoonInfo": {
+    "name": "Typhoon Queenie",
+    "wind": 150,
+    "location": "Inside PAR · 450 km East of Catarman, Northern Samar"
+  },
+  "hasLPA": false,
+  "lpaInfo": ""
+}
+----------------------------------------------------------------
+
+EXAMPLE — Only an LPA (no typhoon)
+----------------------------------------------------------------
+{
+  "hasTyphoon": false,
+  "typhoonInfo": {
+    "name": "",
+    "wind": 0,
+    "location": ""
+  },
+  "hasLPA": true,
+  "lpaInfo": "LPA 200 km West of Puerto Princesa, Palawan."
+}
+----------------------------------------------------------------
+
+EXAMPLE — Clear skies (no typhoon, no LPA)
+----------------------------------------------------------------
+{
+  "hasTyphoon": false,
+  "typhoonInfo": {
+    "name": "",
+    "wind": 0,
+    "location": ""
+  },
+  "hasLPA": false,
+  "lpaInfo": ""
+}
+----------------------------------------------------------------
+
+PRIORITY: If both hasTyphoon and hasLPA are true, the typhoon
+banner takes precedence (typhoons are the more urgent alert).
+
+================================================================
+  EMERGENCY: LOCAL LONG-PRESS ADMIN PANEL
+================================================================
+
+For URGENT updates that cannot wait for the hourly GitHub sync:
+
+  1. On the dashboard itself, LONG-PRESS (hold for 3 seconds)
+     the title of either card:
+       - "School Status"    → opens the status admin panel
+       - "School Announcement" → opens the announcement admin
+
+  2. Make the change in the modal, click Save.
+  3. It takes effect IMMEDIATELY (saved to browser localStorage).
+  4. The next GitHub sync (within 1 hour) will OVERWRITE it
+     with whatever is in the JSON file on GitHub.
+
+  Use this for:
+    - Class suspension announced 5 minutes ago
+    - Fire drill at 2 PM today
+    - Any last-minute update
+
+  Always follow up by updating the JSON on GitHub afterward so
+  all other TVs pick up the same change.
+
+================================================================
+  TROUBLESHOOTING
+================================================================
+
+SYMPTOM: Dashboard shows default/old text after you commit
+  CAUSE: GitHub CDN caches raw files for ~5 minutes, plus the
+         dashboard polls every 60 minutes.
+  FIX:   Wait up to 65 minutes, or refresh the browser to force
+         an immediate re-fetch.
+
+SYMPTOM: Status card shows "NORMAL" even though you set
+         "SUSPENDED" in school_status.json
+  CAUSE: Typo in the JSON (missing comma, unclosed quote).
+  FIX:   Validate at https://jsonlint.com. Most common errors:
+           - Trailing comma after the last field
+           - Missing double quotes around a string
+           - Wrong state spelling (must be ALL CAPS)
+
+SYMPTOM: PAR strip shows "No Typhoon or LPA" even though
+         hasTyphoon is true
+  CAUSE: JSON parse failed, or GitHub URL is wrong.
+  FIX:   Open the raw URL in a browser. If you see the JSON,
+         the URL is fine — check the JSON structure.
+
+SYMPTOM: Console shows "Remote fetch failed" warnings
+  CAUSE: GitHub outage, network issue, or wrong URL.
+  FIX:   The dashboard falls back to cached versions from
+         localStorage — it keeps working. Check console and
+         verify the URL is https://raw.githubusercontent.com/
+         not github.com/.../blob/...
+
+================================================================
+  QUICK REFERENCE CARD
+================================================================
+
+  Update the announcement   → edit announcement.json
+  Set classes suspended     → edit school_status.json
+  Declare a typhoon alert   → edit par_status.json
+  URGENT change (any card)  → long-press card title on the TV
+
+  Files live in the repo ROOT, alongside index.html.
+  Raw URL pattern:
+    https://raw.githubusercontent.com/<user>/<repo>/main/<file>.json
+
+  After every commit:
+    - 5 min for GitHub CDN to serve fresh
+    - 60 min for dashboard to poll
+    - Worst case: 65 minutes total
+
+================================================================
+  END OF GUIDE
+================================================================
