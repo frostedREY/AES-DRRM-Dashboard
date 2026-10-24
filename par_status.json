@@ -5,8 +5,8 @@
     "wind": 0,
     "location": ""
   },
-  "hasLPA": true,
-  "lpaInfo": "LPA Inside PAR",
+  "hasLPA": false,
+  "lpaInfo": "",
   "hasITCZ": true,
   "itczInfo": {
     "place": "The eastern sections of Visayas and Mindanao",
