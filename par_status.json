@@ -7,10 +7,10 @@
   },
   "hasLPA": false,
   "lpaInfo": "",
-  "hasITCZ": true,
+  "hasITCZ": false,
   "itczInfo": {
-    "place": "The eastern sections of Visayas and Mindanao",
-    "speed": "Light to Moderate",
-    "direction": "Northeast to Northwest"
+    "place": "",
+    "speed": "",
+    "direction": ""
   }
 }
