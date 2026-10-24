@@ -1,10 +1,16 @@
 {
   "hasTyphoon": false,
   "typhoonInfo": {
-    "name": "Super Typhoon Choi-wan",
-    "wind": 195,
-    "location": "Outside PAR · 2,605 km East of Extreme Northern Luzon"
+    "name": "",
+    "wind": 0,
+    "location": ""
   },
-  "hasLPA": false,
-  "lpaInfo": ""
+  "hasLPA": true,
+  "lpaInfo": "LPA Inside PAR",
+  "hasITCZ": true,
+  "itczInfo": {
+    "place": "The eastern sections of Visayas and Mindanao",
+    "speed": "Light to Moderate",
+    "direction": "Northeast to Northwest"
+  }
 }
