@@ -1,5 +1,5 @@
 {
-  "state": "MONITORING",
-  "message": "School is currently experiencing heavy rains. Teachers and learners are requested to be vigilant and stay tuned for the latest update. Thank you!",
-  "asOfDate": "2026-10-24"
+  "state": "SUSPENDED",
+  "message": "Classes are suspended due to severe weather status. Everyone is advised to stay safe and prepare for a possible evacuation.",
+  "asOfDate": "2026-10-25"
 }
