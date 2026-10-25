@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f2138" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>DRRM JSON Generator</title>
+<style>
+  :root {
+    --bg: #0f2138;
+    --bg-elevated: #142a45;
+    --bg-elevated-2: #1a3350;
+    --bg-input: #0a1a2e;
+    --bg-input-focus: #0c2138;
+    --bg-output: #071526;
+    --bg-output-error: #2b1212;
+    --bg-appbar: rgba(15, 33, 56, 0.85);
+    --bg-appbar-scrolled: rgba(15, 33, 56, 0.97);
+    --bg-overlay: rgba(0,0,0,.55);
+    --text: #e2ecf7;
+    --text-dim: #8fb0d4;
+    --text-muted: #6d8aab;
+    --text-output: #b7e0ff;
+    --border: #23405f;
+    --border-soft: #1d3550;
+    --border-input: #2a4766;
+    --border-focus: #5b8cc4;
+    --accent: #4d8fd6;
+    --accent-strong: #3d6ba3;
+    --accent-glow: rgba(77,143,214,.22);
+    --success: #4dc98a;
+    --danger: #e05c5c;
+    --warning: #e0b04d;
+    --warning-bg: #2d2410;
+    --warning-text: #e8c47a;
+    --info-bg: #142a45;
+    --info-text: #8fb0d4;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.35);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,.45);
+    --radius: 10px;
+    --radius-sm: 8px;
+    --radius-lg: 14px;
+    --max-width: 1280px;
+    --appbar-h: 60px;
+  }
+  html[data-theme="light"] {
+    --bg: #f4f7fb;
+    --bg-elevated: #ffffff;
+    --bg-elevated-2: #f1f6fd;
+    --bg-input: #ffffff;
+    --bg-input-focus: #fbfdff;
+    --bg-output: #0e1b2b;
+    --bg-output-error: #2b1212;
+    --bg-appbar: rgba(244, 247, 251, 0.85);
+    --bg-appbar-scrolled: rgba(244, 247, 251, 0.97);
+    --bg-overlay: rgba(0,0,0,.35);
+    --text: #0f1f2e;
+    --text-dim: #3a5573;
+    --text-muted: #8ca3bf;
+    --text-output: #b7e0ff;
+    --border: #e2e9f2;
+    --border-soft: #e8eef6;
+    --border-input: #cad5e6;
+    --border-focus: #1e3c72;
+    --accent: #1e3c72;
+    --accent-strong: #254d8a;
+    --accent-glow: rgba(30,60,114,.12);
+    --success: #1f6b3a;
+    --danger: #cc3b3b;
+    --warning: #d99a1a;
+    --warning-bg: #fff7e6;
+    --warning-text: #7a5a1a;
+    --info-bg: #f1f6fd;
+    --info-text: #3a5573;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea, select { font-family: inherit; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .appbar {
+    position: sticky; top: 0; z-index: 100;
+    height: var(--appbar-h);
+    padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
+    display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    background: var(--bg-appbar);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid transparent;
+    transition: background .25s, border-color .25s;
+  }
+  .appbar.scrolled { background: var(--bg-appbar-scrolled); border-bottom-color: var(--border-soft); }
+  .appbar-brand { display: flex; align-items: center; gap: .6rem; min-width: 0; flex-shrink: 1; }
+  .appbar-logo {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1rem; font-weight: 700; flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+  .appbar-title { font-size: .95rem; font-weight: 700; letter-spacing: -.01em; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .appbar-title small { display: block; font-size: .68rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+  @media (max-width: 480px) {
+    .appbar-title { font-size: .85rem; }
+    .appbar-title small { font-size: .62rem; }
+  }
+  .appbar-actions { display: flex; align-items: center; gap: .35rem; flex-shrink: 0; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    background: transparent; color: var(--text-dim); font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s, transform .15s;
+    position: relative;
+  }
+  .icon-btn:hover { background: var(--bg-elevated-2); color: var(--text); }
+  .icon-btn:active { transform: scale(.92); }
+  .icon-btn .dot-badge {
+    position: absolute; top: 4px; right: 4px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    background: var(--accent); color: white;
+    font-size: .6rem; font-weight: 700;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--bg-appbar);
+  }
+  .icon-btn .dot-badge.hidden { display: none; }
+
+  .theme-toggle { overflow: hidden; }
+  .theme-toggle .icon { position: absolute; transition: transform .4s cubic-bezier(.4,1.6,.6,1), opacity .3s; line-height: 1; }
+  .theme-toggle .icon.sun { transform: translateY(0) rotate(0); opacity: 1; }
+  .theme-toggle .icon.moon { transform: translateY(28px) rotate(-90deg); opacity: 0; }
+  html[data-theme="light"] .theme-toggle .icon.sun { transform: translateY(-28px) rotate(90deg); opacity: 0; }
+  html[data-theme="light"] .theme-toggle .icon.moon { transform: translateY(0) rotate(0); opacity: 1; }
+
+  .dash-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    height: 38px; padding: 0 .85rem;
+    border-radius: 19px; border: 1px solid var(--border-input);
+    background: var(--bg-elevated-2); color: var(--text);
+    font-size: .8rem; font-weight: 600;
+    transition: all .15s;
+    position: relative; overflow: hidden;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .dash-btn:hover:not(.empty) { background: var(--bg-elevated); border-color: var(--border-focus); }
+  .dash-btn.empty { color: var(--text-muted); border-style: dashed; }
+  .dash-btn .dash-label { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 640px) {
+    .dash-btn .dash-label { display: none; }
+    .dash-btn { padding: 0; width: 38px; justify-content: center; border-radius: 50%; }
+  }
+  .dash-btn .dash-fill {
+    position: absolute; inset: 0;
+    background: var(--accent); opacity: 0;
+    transform-origin: left; transform: scaleX(0);
+    pointer-events: none;
+  }
+  .dash-btn.holding .dash-fill { opacity: .18; transform: scaleX(1); transition: transform .6s linear, opacity .1s; }
+
+  .content {
+    max-width: var(--max-width); margin: 0 auto;
+    padding: 1.25rem max(1rem, env(safe-area-inset-left)) calc(1.5rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-right));
+  }
+
+  .mode-switch {
+    display: inline-flex; gap: 2px; padding: 3px;
+    background: var(--bg-elevated); border: 1px solid var(--border-soft);
+    border-radius: var(--radius); margin-bottom: .85rem;
+  }
+  .mode-switch button {
+    padding: .45rem .9rem; border: none; background: transparent;
+    border-radius: calc(var(--radius) - 2px); font-size: .8rem; font-weight: 600;
+    color: var(--text-muted); transition: background .15s, color .15s;
+    display: inline-flex; align-items: center; gap: .35rem;
+  }
+  .mode-switch button.on { background: var(--accent); color: white; box-shadow: 0 1px 4px var(--accent-glow); }
+  .mode-switch button:hover:not(.on) { color: var(--text); }
+
+  .tabs {
+    display: flex; gap: .25rem; padding: .3rem;
+    background: var(--bg-elevated); border: 1px solid var(--border-soft);
+    border-radius: var(--radius); margin-bottom: 1.25rem;
+    overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 1; min-width: max-content; padding: .6rem 1rem;
+    border: none; background: transparent; border-radius: calc(var(--radius) - 2px);
+    font-size: .82rem; font-weight: 600; color: var(--text-dim);
+    white-space: nowrap; transition: background .15s, color .15s;
+  }
+  .tab:hover:not(.active) { background: var(--bg-elevated-2); color: var(--text); }
+  .tab.active { background: var(--accent); color: white; box-shadow: 0 2px 8px var(--accent-glow); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.25rem; align-items: start;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; gap: 1rem; } }
+
+  .card {
+    background: var(--bg-elevated); border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg); overflow: hidden;
+    transition: background .25s, border-color .25s;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    padding: .85rem 1.1rem; border-bottom: 1px solid var(--border-soft);
+    font-size: .85rem; font-weight: 600; color: var(--text);
+  }
+  .card-head .chip {
+    font-size: .65rem; font-weight: 700; letter-spacing: .4px;
+    text-transform: uppercase; padding: .2rem .55rem; border-radius: 20px;
+    background: var(--bg-elevated-2); color: var(--text-muted);
+    white-space: nowrap; transition: background .25s, color .25s;
+  }
+  .card-head .chip.ok { background: var(--success); color: white; }
+  .card-head .chip.err { background: var(--danger); color: white; }
+  .card-head .chip.warn { background: var(--warning); color: white; }
+  .card-body { padding: 1.1rem; }
+  @media (max-width: 480px) { .card-body { padding: .9rem; } }
+
+  .form-section + .form-section { margin-top: 1rem; }
+  .form-section h3 {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--text-muted); margin-bottom: .65rem;
+  }
+  .field { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .85rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label {
+    display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+    font-size: .78rem; font-weight: 600; color: var(--text-dim);
+  }
+  .counter { font-size: .68rem; font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .counter.over { color: var(--danger); font-weight: 700; }
+  input[type="text"], input[type="date"], input[type="number"], input[type="url"], textarea, select {
+    width: 100%; padding: .6rem .75rem; font-size: .88rem;
+    color: var(--text); background: var(--bg-input);
+    border: 1px solid var(--border-input); border-radius: var(--radius-sm);
+    outline: none; transition: border-color .15s, box-shadow .15s, background .15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: .7; }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: var(--bg-input-focus);
+  }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+  input.over, textarea.over { border-color: var(--danger); background: var(--warning-bg); }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%238fb0d4' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right .7rem center;
+    padding-right: 1.9rem; cursor: pointer;
+  }
+  html[data-theme="light"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%233a5573' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .6; cursor: pointer; }
+  html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+
+  .segmented { display: flex; gap: 2px; padding: 3px; background: var(--bg-input); border: 1px solid var(--border-input); border-radius: var(--radius-sm); }
+  .segmented button {
+    flex: 1; padding: .45rem .5rem; border: none; background: transparent;
+    border-radius: calc(var(--radius-sm) - 2px); font-size: .8rem; font-weight: 600;
+    color: var(--text-muted); transition: background .15s, color .15s;
+  }
+  .segmented button.on { background: var(--accent); color: white; box-shadow: 0 1px 4px var(--accent-glow); }
+  .segmented button:hover:not(.on) { color: var(--text); }
+
+  .conditional { display: none; margin-top: .85rem; }
+  .conditional.show { display: block; }
+
+  .loc-row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: .6rem; }
+  @media (max-width: 420px) { .loc-row { grid-template-columns: 1fr; } }
+
+  .hide-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem .7rem;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    margin-bottom: .85rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  .hide-toggle .ht-label {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+  }
+  .hide-toggle .ht-hint {
+    font-size: .68rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: .15rem;
+    line-height: 1.3;
+  }
+  .hide-toggle .ht-text { display: flex; flex-direction: column; }
+  .switch {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .switch .track {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 11px;
+    transition: background .2s, border-color .2s;
+  }
+  .switch .thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform .2s, background .2s;
+  }
+  .switch input:checked ~ .track { background: var(--accent); border-color: var(--accent); }
+  .switch input:checked ~ .thumb { transform: translateX(16px); background: white; }
+  .switch input:focus-visible ~ .track { box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  .fields-collapsed { display: none; }
+
+  .notice {
+    display: block; margin-top: .9rem; padding: .65rem .85rem;
+    font-size: .8rem; line-height: 1.5;
+    color: var(--warning-text); background: var(--warning-bg);
+    border: 1px solid var(--warning); border-radius: var(--radius-sm);
+    transition: background .25s, color .25s, border-color .25s;
+  }
+  .notice strong { font-weight: 700; }
+  .notice code { background: rgba(0,0,0,.15); padding: .05rem .35rem; border-radius: 4px; font-size: .9em; font-weight: 600; }
+  html[data-theme="light"] .notice code { background: rgba(0,0,0,.06); }
+
+  .preview {
+    margin-top: 1rem; padding: .9rem 1rem;
+    background: var(--bg-elevated-2); border: 1px dashed var(--border-input);
+    border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: .35rem;
+    transition: background .25s, border-color .25s;
+  }
+  .preview-badge { align-self: flex-start; font-size: .62rem; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: .15rem .55rem; border-radius: 20px; background: var(--accent); color: white; }
+  .preview-title { font-size: .95rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .preview-body { font-size: .82rem; color: var(--text-dim); line-height: 1.45; }
+
+  .paste-area { min-height: 320px; font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: .82rem; line-height: 1.55; }
+  @media (max-width: 480px) { .paste-area { min-height: 240px; font-size: .76rem; } }
+
+  .warnings-list {
+    margin-top: .85rem; padding: .75rem .9rem;
+    background: var(--warning-bg); border: 1px solid var(--warning);
+    border-radius: var(--radius-sm); font-size: .8rem;
+    color: var(--warning-text); line-height: 1.5;
+  }
+  .warnings-list:empty { display: none; }
+  .warnings-list strong { display: block; margin-bottom: .3rem; font-weight: 700; }
+  .warnings-list ul { padding-left: 1.1rem; margin: 0; }
+  .warnings-list li { margin-bottom: .2rem; }
+
+  .output-card { position: sticky; top: calc(var(--appbar-h) + 1rem); }
+  @media (max-width: 900px) { .output-card { position: static; } }
+  .output-body {
+    background: var(--bg-output); color: var(--text-output);
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: .8rem; line-height: 1.6; padding: 1rem;
+    overflow: auto; white-space: pre-wrap; word-break: break-word;
+    min-height: 240px; max-height: 440px;
+    transition: background .25s;
+  }
+  .output-body.error { background: var(--bg-output-error); color: #ffb3b3; }
+  @media (max-width: 480px) { .output-body { font-size: .74rem; min-height: 180px; padding: .85rem; } }
+
+  .output-toolbar {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
+    padding: .75rem; border-top: 1px solid var(--border-soft);
+    background: var(--bg-elevated);
+  }
+  .output-toolbar .btn-primary { grid-column: 1 / -1; }
+  .output-toolbar .btn-wide { grid-column: 1 / -1; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    padding: .65rem .9rem; font-size: .82rem; font-weight: 600;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-input);
+    background: var(--bg-elevated-2); color: var(--text);
+    transition: background .15s, border-color .15s, transform .1s, opacity .15s;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn:hover:not(:disabled) { background: var(--bg-elevated); border-color: var(--border-focus); }
+  .btn:active:not(:disabled) { transform: scale(.97); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 2px 8px var(--accent-glow); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .btn-deploy { background: var(--success); border-color: var(--success); color: white; box-shadow: 0 2px 8px rgba(77,201,138,.3); }
+  .btn-deploy:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn-deploy[hidden] { display: none; }
+
+  .btn.copy-flash { animation: copy-pulse .6s ease; }
+  @keyframes copy-pulse {
+    0%, 100% { background: var(--bg-elevated-2); }
+    50% { background: var(--success); color: white; }
+  }
+
+  .deploy-hint {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: .72rem;
+    color: var(--text-muted);
+    padding: .15rem 0 .35rem;
+    line-height: 1.4;
+  }
+  .deploy-hint a { color: var(--accent); font-weight: 600; }
+
+  .settings-page { display: none; }
+  .settings-page.show { display: block; }
+  .main-page.hidden { display: none; }
+  .page-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .page-head h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; }
+  @media (max-width: 480px) { .page-head h1 { font-size: 1.15rem; } }
+
+  .accordion {
+    background: var(--bg-elevated); border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg); overflow: hidden; margin-bottom: .85rem;
+    transition: background .25s, border-color .25s;
+  }
+  .accordion-head {
+    display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    width: 100%; padding: 1rem 1.1rem; border: none; background: transparent;
+    text-align: left; color: var(--text); font-size: .92rem; font-weight: 700;
+    transition: background .15s;
+  }
+  .accordion-head:hover { background: var(--bg-elevated-2); }
+  .accordion-head .chev { font-size: .75rem; color: var(--text-muted); transition: transform .25s; flex-shrink: 0; }
+  .accordion.open .accordion-head .chev { transform: rotate(180deg); }
+  .accordion-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+  .accordion.open .accordion-body { max-height: 4000px; }
+  .accordion-inner { padding: 0 1.1rem 1.1rem; font-size: .86rem; color: var(--text-dim); line-height: 1.6; }
+  .accordion-inner > * + * { margin-top: .65rem; }
+  .accordion-inner ul { padding-left: 1.2rem; }
+  .accordion-inner li { margin-bottom: .3rem; }
+  .accordion-inner strong { color: var(--text); font-weight: 700; }
+  .accordion-inner code { background: var(--bg-elevated-2); padding: .1rem .4rem; border-radius: 4px; font-size: .85em; color: var(--accent); font-weight: 600; }
+
+  .crypto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .75rem; }
+  @media (max-width: 600px) { .crypto-grid { grid-template-columns: 1fr; } }
+  .crypto-card {
+    padding: .9rem; border: 1px solid var(--border-soft);
+    border-radius: var(--radius); background: var(--bg-elevated-2);
+    display: flex; flex-direction: column; gap: .55rem;
+    transition: background .25s, border-color .25s;
+  }
+  .crypto-head { display: flex; align-items: center; gap: .5rem; font-size: .85rem; font-weight: 700; color: var(--text); }
+  .crypto-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .9rem; font-weight: 700; color: white; flex-shrink: 0; }
+  .crypto-icon.btc { background: #f7931a; }
+  .crypto-icon.doge { background: #c2a633; }
+  .crypto-addr {
+    background: var(--bg-output); color: var(--text-output);
+    font-family: ui-monospace, monospace; font-size: .68rem;
+    padding: .6rem .7rem; border-radius: 6px; word-break: break-all; line-height: 1.45;
+    cursor: pointer; border: 1px solid transparent; transition: border-color .15s;
+  }
+  .crypto-addr:hover { border-color: var(--border-focus); }
+  .crypto-addr.flash { animation: flash-green .6s ease; }
+  @keyframes flash-green {
+    0%, 100% { background: var(--bg-output); }
+    50% { background: var(--success); }
+  }
+  .crypto-hint { font-size: .68rem; color: var(--text-muted); text-align: center; }
+  .crypto-note { font-size: .74rem; color: var(--text-muted); font-style: italic; text-align: center; margin-top: .6rem; }
+
+  .dash-settings-row { display: flex; gap: .5rem; align-items: stretch; }
+  .dash-settings-row input { flex: 1; }
+  .dash-settings-row .btn { flex-shrink: 0; }
+  @media (max-width: 480px) { .dash-settings-row { flex-direction: column; } }
+
+  .edit-url-help {
+    background: var(--bg-elevated-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: .6rem .75rem;
+    font-size: .76rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin-top: .5rem;
+  }
+  .edit-url-help code {
+    background: var(--bg-output);
+    color: var(--text-output);
+    padding: .1rem .4rem;
+    border-radius: 4px;
+    font-size: .85em;
+    font-family: ui-monospace, monospace;
+  }
+  .edit-url-status {
+    font-size: .75rem;
+    margin-top: .4rem;
+    color: var(--text-muted);
+  }
+  .edit-url-status.configured { color: var(--success); font-weight: 600; }
+
+  .drawer-overlay {
+    position: fixed; inset: 0; background: var(--bg-overlay);
+    z-index: 200; opacity: 0; pointer-events: none;
+    transition: opacity .25s ease; backdrop-filter: blur(2px);
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(440px, 100vw);
+    background: var(--bg-elevated); z-index: 201;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: -8px 0 32px rgba(0,0,0,.35);
+    border-left: 1px solid var(--border-soft);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    padding: 1rem 1.1rem; border-bottom: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .drawer-head h2 { font-size: 1rem; font-weight: 700; }
+  .drawer-head .drawer-actions { display: flex; gap: .35rem; align-items: center; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: .85rem; -webkit-overflow-scrolling: touch; }
+  .drawer-empty {
+    text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
+    font-size: .88rem; line-height: 1.6;
+  }
+  .drawer-empty .big { font-size: 2.2rem; display: block; margin-bottom: .5rem; opacity: .6; }
+
+  .draft-item {
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    margin-bottom: .6rem;
+    transition: background .15s, border-color .15s;
+    overflow: hidden;
+  }
+  .draft-item:hover { border-color: var(--border-focus); }
+  .draft-item.open { border-color: var(--accent); }
+  .draft-summary {
+    display: flex; align-items: flex-start; gap: .6rem;
+    padding: .7rem .85rem; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    transition: background .15s;
+  }
+  .draft-summary:hover { background: var(--bg-elevated); }
+  .draft-chev {
+    flex-shrink: 0; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; color: var(--text-muted);
+    transition: transform .25s; margin-top: 1px;
+  }
+  .draft-item.open .draft-chev { transform: rotate(90deg); color: var(--accent); }
+  .draft-summary-main { flex: 1; min-width: 0; }
+  .draft-meta {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    margin-bottom: .25rem; font-size: .68rem; color: var(--text-muted);
+  }
+  .draft-meta .draft-file {
+    font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    padding: .12rem .45rem; border-radius: 4px;
+    background: var(--accent); color: white; font-size: .58rem;
+  }
+  .draft-preview {
+    font-family: ui-monospace, monospace; font-size: .7rem;
+    color: var(--text-dim); line-height: 1.45;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: opacity .2s;
+  }
+  .draft-item.open .draft-preview { opacity: 0; height: 0; overflow: hidden; }
+  .draft-detail {
+    max-height: 0; overflow: hidden;
+    transition: max-height .3s ease;
+    border-top: 0 solid var(--border-soft);
+  }
+  .draft-item.open .draft-detail { max-height: 2000px; border-top-width: 1px; }
+  .draft-detail-inner { padding: .7rem .85rem .85rem .85rem; }
+  .draft-json {
+    background: var(--bg-output); color: var(--text-output);
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: .7rem; line-height: 1.55;
+    padding: .75rem .8rem; border-radius: 6px;
+    white-space: pre-wrap; word-break: break-word;
+    overflow: auto; max-height: 260px;
+    margin-bottom: .6rem;
+    border: 1px solid var(--border-soft);
+  }
+  .draft-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .draft-actions .btn { flex: 1; min-width: 90px; padding: .45rem .6rem; font-size: .72rem; }
+  .draft-actions .btn-delete { color: var(--danger); border-color: var(--danger); }
+  .draft-actions .btn-delete:hover { background: var(--danger); color: white; }
+
+  .dialog-overlay {
+    position: fixed; inset: 0; background: var(--bg-overlay);
+    z-index: 300; display: flex; align-items: center; justify-content: center;
+    padding: 1rem; opacity: 0; pointer-events: none;
+    transition: opacity .2s; backdrop-filter: blur(2px);
+  }
+  .dialog-overlay.open { opacity: 1; pointer-events: auto; }
+  .dialog {
+    background: var(--bg-elevated); border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg); max-width: 420px; width: 100%;
+    padding: 1.4rem; box-shadow: var(--shadow-lg);
+    transform: translateY(10px) scale(.97);
+    transition: transform .25s cubic-bezier(.4,1.6,.6,1);
+  }
+  .dialog-overlay.open .dialog { transform: translateY(0) scale(1); }
+  .dialog h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .35rem; }
+  .dialog p { font-size: .85rem; color: var(--text-dim); margin-bottom: 1rem; line-height: 1.5; }
+  .dialog-actions { display: flex; gap: .5rem; justify-content: flex-end; }
+
+  #confettiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<canvas id="confettiCanvas"></canvas>
+
+<header class="appbar" id="appbar">
+  <div class="appbar-brand">
+    <div class="appbar-logo">D</div>
+    <div class="appbar-title">
+      DRRM Generator
+      <small>JSON builder for Antipolo ES Dashboard</small>
+    </div>
+  </div>
+  <div class="appbar-actions">
+    <button class="dash-btn empty" id="dashBtn" title="Open dashboard (long-press to set URL)">
+      <span class="dash-fill"></span>
+      <span>🖥️</span>
+      <span class="dash-label" id="dashLabel">Set dashboard</span>
+    </button>
+    <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+      <span class="icon sun">☀️</span>
+      <span class="icon moon">🌙</span>
+    </button>
+    <button class="icon-btn" id="draftsBtn" title="Drafts" aria-label="Open drafts">
+      💾<span class="dot-badge hidden" id="draftsBadge">0</span>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+  </div>
+</header>
+
+<main class="content main-page" id="mainPage">
+  <div class="mode-switch" role="tablist">
+    <button class="on" data-mode="form">✏️ Form mode</button>
+    <button data-mode="paste">📥 Paste mode</button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-file="announcement" role="tab">📢 Announcement</button>
+    <button class="tab" data-file="school_status" role="tab">🏫 Status</button>
+    <button class="tab" data-file="par_status" role="tab">🌪️ PAR</button>
+  </nav>
+
+  <div class="layout">
+    <section class="card">
+      <div class="card-head">
+        <span id="formTitle">📢 announcement.json</span>
+        <span class="chip" id="formBadge">today + event</span>
+      </div>
+      <div class="card-body" id="formArea">
+
+        <!-- ============ ANNOUNCEMENT ============ -->
+        <div id="form-announcement" class="form-section">
+
+          <div class="hide-toggle">
+            <div class="ht-text">
+              <span class="ht-label">🙈 Hide Today's Announcement</span>
+              <span class="ht-hint">Omit this block from the output.</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="hide-today">
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <div id="today-fields">
+            <h3>Today's Announcement</h3>
+            <div class="field">
+              <label for="ann-headline">Headline <span class="counter" id="cnt-ann-headline">0 / 120</span></label>
+              <input type="text" id="ann-headline" maxlength="120" data-count="cnt-ann-headline" data-max="120" placeholder="e.g. Classes suspended today">
+            </div>
+            <div class="field">
+              <label for="ann-body">Body <span class="counter" id="cnt-ann-body">0 / 400</span></label>
+              <textarea id="ann-body" maxlength="400" data-count="cnt-ann-body" data-max="400" placeholder="e.g. Due to Typhoon Queenie. Resume tomorrow, Oct 11."></textarea>
+            </div>
+          </div>
+
+          <div class="hide-toggle" style="margin-top:1.1rem;">
+            <div class="ht-text">
+              <span class="ht-label">🙈 Hide Upcoming Event</span>
+              <span class="ht-hint">Omit this block from the output.</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="hide-event">
+              <span class="track"></span>
+              <span class="thumb"></span>
+            </label>
+          </div>
+
+          <div id="event-fields">
+            <h3>Upcoming Event</h3>
+            <div class="field">
+              <label for="evt-badge">Badge</label>
+              <select id="evt-badge">
+                <option value="Upcoming Event">Upcoming Event</option>
+                <option value="Reminder">Reminder</option>
+                <option value="Postponed">Postponed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Important">Important</option>
+                <option value="Custom…">Custom…</option>
+              </select>
+              <input type="text" id="evt-badge-custom" maxlength="40" placeholder="Type custom badge…" class="hidden" style="margin-top:.4rem;">
+            </div>
+            <div class="field">
+              <label for="evt-headline">Headline <span class="counter" id="cnt-evt-headline">0 / 100</span></label>
+              <input type="text" id="evt-headline" maxlength="100" data-count="cnt-evt-headline" data-max="100" placeholder="e.g. Portfolio Day this Friday">
+            </div>
+            <div class="field">
+              <label for="evt-body">Body <span class="counter" id="cnt-evt-body">0 / 500</span></label>
+              <textarea id="evt-body" maxlength="500" data-count="cnt-evt-body" data-max="500" placeholder="e.g. Parents and guardians are encouraged to attend."></textarea>
+            </div>
+            <div class="field">
+              <label for="evt-date">As-of date (optional)</label>
+              <input type="date" id="evt-date">
+            </div>
+            <div class="preview">
+              <span class="preview-badge" id="preview-badge">Upcoming Event</span>
+              <span class="preview-title" id="preview-headline">Portfolio Day this Friday</span>
+              <span class="preview-body" id="preview-body">Parents and guardians are encouraged to attend.</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============ SCHOOL STATUS ============ -->
+        <div id="form-school_status" class="form-section hidden">
+          <h3>School Status Override</h3>
+          <div class="field">
+            <label for="ss-state">State</label>
+            <select id="ss-state">
+              <option value="">"" — Automatic (no override)</option>
+              <option value="NORMAL">NORMAL — Green, no threat</option>
+              <option value="MONITORING">MONITORING — Yellow, potential threat</option>
+              <option value="SUSPENDED">SUSPENDED — Orange, classes suspended</option>
+              <option value="EMERGENCY">EMERGENCY — Red, active incident</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ss-message">Message <span class="counter" id="cnt-ss-message">0 / 300</span></label>
+            <textarea id="ss-message" maxlength="300" data-count="cnt-ss-message" data-max="300" placeholder="e.g. Classes suspended until Oct 8. Monitor PAGASA bulletins."></textarea>
+          </div>
+          <div class="field">
+            <label for="ss-date">As-of date (optional)</label>
+            <input type="date" id="ss-date">
+          </div>
+          <p class="notice">💡 Leave state as <strong>"" (automatic)</strong> to let the dashboard auto-detect from earthquakes &amp; AQI.</p>
+        </div>
+
+        <!-- ============ PAR STATUS ============ -->
+        <div id="form-par_status" class="form-section hidden">
+          <h3>Typhoon</h3>
+          <div class="field">
+            <label>Has Typhoon?</label>
+            <div class="segmented" id="par-typhoon-toggle">
+              <button type="button" class="on" data-val="false">No</button>
+              <button type="button" data-val="true">Yes</button>
+            </div>
+          </div>
+          <div class="conditional" id="typhoon-fields">
+            <div class="field">
+              <label for="par-typhoon-name">Typhoon name <span class="counter" id="cnt-par-typhoon-name">0 / 60</span></label>
+              <input type="text" id="par-typhoon-name" maxlength="60" data-count="cnt-par-typhoon-name" data-max="60" placeholder="e.g. Typhoon Queenie">
+            </div>
+            <div class="field">
+              <label for="par-typhoon-wind">Max sustained wind (km/h)</label>
+              <input type="number" id="par-typhoon-wind" inputmode="numeric" placeholder="e.g. 150" min="0">
+            </div>
+            <div class="field">
+              <label>Location</label>
+              <div class="loc-row">
+                <select id="par-typhoon-par">
+                  <option value="Inside PAR">Inside PAR</option>
+                  <option value="Outside PAR">Outside PAR</option>
+                </select>
+                <input type="number" id="par-typhoon-km" inputmode="numeric" placeholder="Distance (km)" min="0">
+              </div>
+              <input type="text" id="par-typhoon-dir" maxlength="80" placeholder="Direction &amp; nearest location — e.g. East of Catarman, Northern Samar">
+              <div class="counter" id="cnt-par-typhoon-loc" style="text-align:right;">0 / 120</div>
+            </div>
+          </div>
+
+          <h3 style="margin-top:1.25rem;">Low Pressure Area (LPA)</h3>
+          <div class="field">
+            <label>Has LPA?</label>
+            <div class="segmented" id="par-lpa-toggle">
+              <button type="button" class="on" data-val="false">No</button>
+              <button type="button" data-val="true">Yes</button>
+            </div>
+          </div>
+          <div class="conditional" id="lpa-fields">
+            <div class="field">
+              <label>LPA position</label>
+              <div class="loc-row">
+                <select id="par-lpa-par">
+                  <option value="Inside PAR">Inside PAR</option>
+                  <option value="Outside PAR">Outside PAR</option>
+                </select>
+                <input type="number" id="par-lpa-km" inputmode="numeric" placeholder="Distance (km)" min="0">
+              </div>
+              <input type="text" id="par-lpa-dir" maxlength="80" placeholder="Direction &amp; nearest location — e.g. West of Puerto Princesa, Palawan">
+              <div class="counter" id="cnt-par-lpa-info" style="text-align:right;">0 / 200</div>
+            </div>
+          </div>
+
+          <h3 style="margin-top:1.25rem;">Intertropical Convergence Zone (ITCZ)</h3>
+          <div class="field">
+            <label>Has active ITCZ?</label>
+            <div class="segmented" id="par-itcz-toggle">
+              <button type="button" class="on" data-val="false">No</button>
+              <button type="button" data-val="true">Yes</button>
+            </div>
+          </div>
+          <div class="conditional" id="itcz-fields">
+            <div class="field">
+              <label for="par-itcz-place">Affected place <span class="counter" id="cnt-par-itcz-place">0 / 120</span></label>
+              <input type="text" id="par-itcz-place" maxlength="120" data-count="cnt-par-itcz-place" data-max="120" placeholder="e.g. The eastern sections of Visayas and Mindanao">
+            </div>
+            <div class="field">
+              <label for="par-itcz-speed">Wind speed</label>
+              <select id="par-itcz-speed">
+                <option value="Light">Light</option>
+                <option value="Light to Moderate" selected>Light to Moderate</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Moderate to Strong">Moderate to Strong</option>
+                <option value="Strong">Strong</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="par-itcz-dir">Wind direction</label>
+              <select id="par-itcz-dir">
+                <option value="North to Northeast">North to Northeast</option>
+                <option value="Northeast to Northwest" selected>Northeast to Northwest</option>
+                <option value="North to Northwest">North to Northwest</option>
+                <option value="East to Northeast">East to Northeast</option>
+                <option value="East to Southeast">East to Southeast</option>
+                <option value="Southeast to Southwest">Southeast to Southwest</option>
+                <option value="South to Southwest">South to Southwest</option>
+                <option value="South to Southeast">South to Southeast</option>
+                <option value="West to Northwest">West to Northwest</option>
+                <option value="West to Southwest">West to Southwest</option>
+                <option value="Variable">Variable</option>
+                <option value="Custom…">Custom…</option>
+              </select>
+              <input type="text" id="par-itcz-dir-custom" maxlength="80" placeholder="Type custom direction…" class="hidden" style="margin-top:.4rem;">
+            </div>
+          </div>
+
+          <p class="notice">⚠️ If both are set to <strong>Yes</strong>, the typhoon banner takes precedence.</p>
+        </div>
+
+        <!-- ============ PASTE MODE ============ -->
+        <div id="form-paste" class="form-section hidden">
+          <h3>Paste existing JSON</h3>
+          <p style="font-size:.82rem; color:var(--text-dim); margin-bottom:.7rem;">Paste any JSON that matches the current file type. Valid JSON will populate the form automatically so you can edit it.</p>
+          <textarea id="pasteInput" class="paste-area" placeholder='Paste your JSON here, then click "Load into form"'></textarea>
+          <div style="display:flex; gap:.5rem; margin-top:.75rem; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="loadPasteBtn" style="flex:1;">📥 Load into form</button>
+            <button class="btn" id="clearPasteBtn" style="flex:0 0 auto;">Clear</button>
+          </div>
+          <div id="pasteWarnings" class="warnings-list"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="card output-card">
+      <div class="card-head">
+        <span>📤 Generated JSON</span>
+        <span class="chip" id="outBadge">ready</span>
+      </div>
+      <div class="output-body" id="outputArea">Fill in the form and click “Generate JSON”.</div>
+      <div id="warningsBlock" class="warnings-list" style="margin:.75rem;"></div>
+      <div class="output-toolbar">
+        <button class="btn btn-primary" id="generateBtn">⚡ Generate &amp; Copy</button>
+        <button class="btn" id="copyBtn" disabled>📋 Copy</button>
+        <a class="btn btn-deploy" id="deployBtn" href="#" target="_blank" rel="noopener noreferrer" hidden>🚀 Open Edit Page</a>
+        <button class="btn" id="downloadBtn" disabled>💾 Download</button>
+        <div class="deploy-hint" id="deployHint" hidden>💡 <a href="#" id="deployHintLink">Set an edit URL</a> in Settings to open the GitHub editor in one tap.</div>
+        <button class="btn btn-wide" id="resetBtn">↺ Reset form</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<main class="content settings-page" id="settingsPage">
+  <div class="page-head">
+    <h1>⚙️ Settings &amp; Info</h1>
+    <button class="btn" id="backBtn">← Back</button>
+  </div>
+
+  <div class="accordion open" id="editUrlAccordion">
+    <button class="accordion-head" type="button" aria-expanded="true">
+      <span>🚀 GitHub Edit URL (deploy)</span>
+      <span class="chev">▼</span>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-inner">
+        <p>Set the base edit URL of your GitHub repo. When you Generate, the JSON is copied to your clipboard and a <strong>🚀 Open Edit Page</strong> button appears — tap it to open the GitHub editor, then paste and commit.</p>
+        <div class="dash-settings-row">
+          <input type="url" id="editUrlInput" placeholder="https://github.com/USER/REPO/edit/main/">
+          <button class="btn btn-primary" id="editUrlSaveBtn">Save</button>
+        </div>
+        <p class="edit-url-status" id="editUrlStatus">Not configured.</p>
+        <div class="edit-url-help">
+          <strong>Format:</strong> the app appends the filename automatically.<br>
+          <code>https://github.com/USER/REPO/edit/main/</code><br>
+          <span style="opacity:.75;">If your files live in a subfolder, include it:<br>
+          <code>https://github.com/USER/REPO/edit/main/json/</code></span>
+        </div>
+        <p class="crypto-note" style="text-align:left; margin-top:.6rem;">Leave blank to hide the deploy button and use copy/download only. Works in Android WebView and normal browsers, as long as you're signed in to GitHub.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion" id="dashAccordion">
+    <button class="accordion-head" type="button" aria-expanded="false">
+      <span>🖥️ DRRM Dashboard URL</span>
+      <span class="chev">▼</span>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-inner">
+        <p>Set the URL of your DRRM dashboard. The 🖥️ button in the app bar opens it in a new tab. <strong>Long-press</strong> that same button to edit the URL again later.</p>
+        <div class="dash-settings-row">
+          <input type="url" id="dashUrlInput" placeholder="https://example.github.io/drrm-dashboard/">
+          <button class="btn btn-primary" id="dashSaveBtn">Save</button>
+        </div>
+        <p class="crypto-note" id="dashHint" style="text-align:left; margin-top:.6rem;">Leave blank to disable the dashboard button.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion" id="supportCollapsible">
+    <button class="accordion-head" type="button" aria-expanded="false">
+      <span>💝 Support the Developer</span>
+      <span class="chev">▼</span>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-inner">
+        <p>This tool is free and built with care. If it helps you keep the school community safe and informed, you're welcome to send a small tip in crypto. Every bit is appreciated — thank you! 🙏</p>
+        <div class="crypto-grid">
+          <div class="crypto-card">
+            <div class="crypto-head"><span class="crypto-icon btc">₿</span> Bitcoin (BTC)</div>
+            <div class="crypto-addr" data-address="bc1qexample0000000000000000000000000000000" tabindex="0" role="button">bc1qexample0000000000000000000000000000000</div>
+            <div class="crypto-hint">👆 tap to copy</div>
+          </div>
+          <div class="crypto-card">
+            <div class="crypto-head"><span class="crypto-icon doge">Ð</span> Dogecoin (DOGE)</div>
+            <div class="crypto-addr" data-address="DExampleDogeAddress0000000000000000000" tabindex="0" role="button">DExampleDogeAddress0000000000000000000</div>
+            <div class="crypto-hint">👆 tap to copy</div>
+          </div>
+        </div>
+        <p class="crypto-note">Replace the example addresses with your real wallet addresses before sharing the app.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion" id="purposeCollapsible">
+    <button class="accordion-head" type="button" aria-expanded="false">
+      <span>📖 Purpose &amp; How to Use</span>
+      <span class="chev">▼</span>
+    </button>
+    <div class="accordion-body">
+      <div class="accordion-inner">
+        <p><strong>Purpose.</strong> This tool is a helper for the <strong>Antipolo ES DRRM Dashboard</strong>. It lets an admin fill out a simple form and instantly get a ready-to-paste JSON file, so you never have to hand-write JSON and worry about missing commas or quotes.</p>
+        <p><strong>Who it's for.</strong> The school's DRRM admin who updates the three JSON files hosted on GitHub — <code>announcement.json</code>, <code>school_status.json</code>, and <code>par_status.json</code> — that the dashboard fetches every hour.</p>
+        <p><strong>How to use it.</strong></p>
+        <ul>
+          <li>Pick a file type using the tabs: <strong>Announcement</strong>, <strong>Status</strong>, or <strong>PAR</strong>.</li>
+          <li>Fill in the form, or switch to <strong>📥 Paste mode</strong> to load an existing JSON.</li>
+          <li>In the Announcement tab, you can <strong>hide either section</strong> — the hidden block is omitted from the output entirely, so you get a fragment to paste into the matching spot on GitHub.</li>
+          <li>Tap <strong>⚡ Generate &amp; Copy</strong> — the JSON is built, validated, and copied to your clipboard.</li>
+          <li>If you've set a <strong>GitHub Edit URL</strong>, tap <strong>🚀 Open Edit Page</strong> to jump straight to the GitHub editor, then paste and commit.</li>
+          <li>Every generated JSON is auto-saved to <strong>💾 Drafts</strong> in the app bar.</li>
+        </ul>
+        <p><strong>Rules to remember.</strong> The generator follows the guide: strings in double quotes, no comments, booleans as <code>true</code>/<code>false</code>, numbers plain, and <code>state</code> in ALL CAPS. Always double-check with <a href="https://jsonlint.com" target="_blank" rel="noopener">jsonlint.com</a> before committing.</p>
+        <p><strong>Be responsible.</strong> ⚠️ This is an <strong>emergency-communication tool</strong>. Only publish information you have verified from official sources such as PAGASA, PHIVOLCS, DepEd, or your school administration. False or premature announcements can cause confusion and put people at risk. When in doubt, <strong>confirm first, publish second</strong>. Keep messages clear, calm, and factual. For truly urgent, last-minute updates, use the dashboard's long-press local admin panel, then sync the JSON afterward so all TVs pick up the same change.</p>
+        <p>Thank you for helping keep the school safe and well-informed. 💙</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="draftsDrawer" aria-label="Drafts">
+  <div class="drawer-head">
+    <h2>💾 Drafts</h2>
+    <div class="drawer-actions">
+      <button class="icon-btn" id="closeDrawerBtn" title="Close">✕</button>
+    </div>
+  </div>
+  <div class="drawer-body" id="draftsBody"></div>
+</aside>
+
+<div class="dialog-overlay" id="dashDialogOverlay">
+  <div class="dialog">
+    <h2>🖥️ Set Dashboard URL</h2>
+    <p>Enter the URL of your DRRM dashboard. It'll open in a new tab when you tap the 🖥️ button.</p>
+    <input type="url" id="dashDialogInput" placeholder="https://example.github.io/drrm-dashboard/" style="margin-bottom:1rem;">
+    <div class="dialog-actions">
+      <button class="btn" id="dashDialogCancel">Cancel</button>
+      <button class="btn btn-primary" id="dashDialogSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============ THEME ============
+  const THEME_KEY = 'drrm-theme';
+  const html = document.documentElement;
+  function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+  }
+  function getSavedTheme() {
+    try { const s = localStorage.getItem(THEME_KEY); if (s === 'light' || s === 'dark') return s; } catch (e) {}
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+    return 'dark';
+  }
+  applyTheme(getSavedTheme());
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+      let saved = null; try { saved = localStorage.getItem(THEME_KEY); } catch (err) {}
+      if (!saved) applyTheme(e.matches ? 'light' : 'dark');
+    });
+  }
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ============ APP BAR SCROLL ============
+  const appbar = document.getElementById('appbar');
+  const onScroll = () => appbar.classList.toggle('scrolled', window.scrollY > 8);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ============ STATE ============
+  let currentFile = 'announcement';
+  let currentMode = 'form';
+  let lastJSON = null;
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+
+  const STORAGE = {
+    DASHBOARD: 'drrm-dashboard-url',
+    DRAFTS: 'drrm-drafts',
+    EDIT_URL: 'drrm-edit-url',
+  };
+  const MAX_DRAFTS = 20;
+
+  // ============ CONFETTI ============
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let raf = null;
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  const COLORS = ['#f7931a','#4d8fd6','#4dc98a','#e05c5c','#e0b04d','#7eb4ff','#c2a633','#e8b7ff','#ffb3b3','#a3e6b8'];
+  function blast(opts = {}) {
+    const count = opts.count || 150;
+    const ox = opts.x ?? window.innerWidth / 2;
+    const oy = opts.y ?? window.innerHeight / 2;
+    const spread = opts.spread ?? Math.PI * 2;
+    const base = opts.angle ?? -Math.PI / 2;
+    for (let i = 0; i < count; i++) {
+      const a = base + (Math.random() - 0.5) * spread;
+      const sp = 6 + Math.random() * 13;
+      particles.push({
+        x: ox, y: oy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2,
+        g: 0.34 + Math.random() * 0.2, s: 5 + Math.random() * 7,
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        rot: Math.random() * Math.PI * 2, vrot: (Math.random() - 0.5) * 0.4,
+        life: 1, decay: 0.008 + Math.random() * 0.012,
+        shape: Math.random() < 0.6 ? 'rect' : 'circle',
+      });
+    }
+    if (!raf) loop();
+  }
+  function loop() {
+    const dpr = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.vy += p.g; p.vx *= 0.99; p.vy *= 0.99;
+      p.x += p.vx; p.y += p.vy;
+      p.rot += p.vrot; p.life -= p.decay;
+      if (p.life <= 0 || p.y > window.innerHeight + 40) { particles.splice(i, 1); continue; }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if (p.shape === 'rect') ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    }
+    if (particles.length) raf = requestAnimationFrame(loop);
+    else { cancelAnimationFrame(raf); raf = null; ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr); }
+  }
+
+  // ============ CLIPBOARD ============
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (err) { return false; }
+    }
+  }
+
+  // ============ COUNTERS ============
+  function setCounter(input) {
+    const id = input.dataset.count;
+    const max = parseInt(input.dataset.max, 10) || 0;
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const len = input.value.length;
+    el.textContent = `${len} / ${max}`;
+    const over = max > 0 && len > max;
+    el.classList.toggle('over', over);
+    input.classList.toggle('over', over);
+  }
+  function updateLocCounter() {
+    const tPar = $('#par-typhoon-par').value;
+    const tKm = $('#par-typhoon-km').value.trim();
+    const tDir = $('#par-typhoon-dir').value;
+    const tPrev = tPar + (tKm ? ' · ' + tKm + ' km ' : ' ') + tDir;
+    const tEl = $('#cnt-par-typhoon-loc');
+    tEl.textContent = tPrev.length + ' / 120';
+    tEl.classList.toggle('over', tPrev.length > 120);
+
+    const lPar = $('#par-lpa-par').value;
+    const lKm = $('#par-lpa-km').value.trim();
+    const lDir = $('#par-lpa-dir').value;
+    const lPrev = 'LPA ' + (lKm ? lKm + ' km ' : '') + lPar + (lDir ? ' · ' + lDir : '');
+    const lEl = $('#cnt-par-lpa-info');
+    lEl.textContent = lPrev.length + ' / 200';
+    lEl.classList.toggle('over', lPrev.length > 200);
+  }
+  function wireCounters() {
+    $$('[data-count]').forEach((inp) => {
+      setCounter(inp);
+      inp.addEventListener('input', () => setCounter(inp));
+    });
+    ['#par-typhoon-dir','#par-typhoon-km','#par-typhoon-par','#par-lpa-dir','#par-lpa-km','#par-lpa-par'].forEach((sel) => {
+      const el = $(sel);
+      if (el) { el.addEventListener('input', updateLocCounter); el.addEventListener('change', updateLocCounter); }
+    });
+  }
+  function wireSegmented(groupId, onChange) {
+    const g = document.getElementById(groupId);
+    if (!g) return;
+    g.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        g.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+        btn.classList.add('on');
+        if (onChange) onChange(btn.dataset.val === 'true');
+      });
+    });
+  }
+  function getSegValue(groupId) {
+    const g = document.getElementById(groupId);
+    if (!g) return false;
+    const on = g.querySelector('button.on');
+    return on ? on.dataset.val === 'true' : false;
+  }
+
+  // ============ HIDE-SECTION TOGGLES ============
+  function setSectionHidden(which, hidden) {
+    const cbId = which === 'today' ? 'hide-today' : 'hide-event';
+    const fieldsId = which === 'today' ? 'today-fields' : 'event-fields';
+    const cb = document.getElementById(cbId);
+    const fields = document.getElementById(fieldsId);
+    if (!cb || !fields) return;
+    cb.checked = hidden;
+    fields.classList.toggle('fields-collapsed', hidden);
+  }
+  function isSectionHidden(which) {
+    const cb = document.getElementById(which === 'today' ? 'hide-today' : 'hide-event');
+    return cb ? cb.checked : false;
+  }
+  function wireHideToggles() {
+    $('#hide-today').addEventListener('change', (e) => {
+      $('#today-fields').classList.toggle('fields-collapsed', e.target.checked);
+    });
+    $('#hide-event').addEventListener('change', (e) => {
+      $('#event-fields').classList.toggle('fields-collapsed', e.target.checked);
+    });
+  }
+
+  // ============ MODE SWITCH ============
+  function setMode(mode) {
+    currentMode = mode;
+    $$('.mode-switch button').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+    if (mode === 'paste') {
+      $$('.form-section').forEach((s) => {
+        if (s.id !== 'form-paste') s.classList.add('hidden');
+      });
+      $('#form-paste').classList.remove('hidden');
+      $('#formTitle').textContent = '📥 Paste JSON';
+      $('#formBadge').textContent = 'paste mode';
+    } else {
+      $('#form-paste').classList.add('hidden');
+      $$('.form-section').forEach((s) => s.classList.add('hidden'));
+      if (currentFile === 'announcement') $('#form-announcement').classList.remove('hidden');
+      else if (currentFile === 'school_status') $('#form-school_status').classList.remove('hidden');
+      else $('#form-par_status').classList.remove('hidden');
+      $('#formTitle').textContent = meta[currentFile].title;
+      $('#formBadge').textContent = meta[currentFile].badge;
+    }
+  }
+  $$('.mode-switch button').forEach((b) => {
+    b.addEventListener('click', () => setMode(b.dataset.mode));
+  });
+
+  // ============ FORM SWITCHING ============
+  const meta = {
+    announcement: { title: '📢 announcement.json', badge: 'today + event' },
+    school_status: { title: '🏫 school_status.json', badge: 'status override' },
+    par_status: { title: '🌪️ par_status.json', badge: 'typhoon / LPA / ITCZ' },
+  };
+  function switchFile(file) {
+    currentFile = file;
+    $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.file === file));
+    if (currentMode === 'form') {
+      $$('.form-section').forEach((s) => s.classList.add('hidden'));
+      document.getElementById('form-' + file).classList.remove('hidden');
+      $('#formTitle').textContent = meta[file].title;
+      $('#formBadge').textContent = meta[file].badge;
+    }
+    resetOutput();
+    refreshDeployButton();
+  }
+  function resetOutput() {
+    $('#outputArea').textContent = 'Fill in the form and click “Generate JSON”.';
+    $('#outputArea').classList.remove('error');
+    $('#outBadge').textContent = 'ready';
+    $('#outBadge').className = 'chip';
+    lastJSON = null;
+    $('#copyBtn').disabled = true;
+    $('#downloadBtn').disabled = true;
+    $('#warningsBlock').innerHTML = '';
+    refreshDeployButton();
+  }
+  $$('.tab').forEach((tab) => tab.addEventListener('click', () => switchFile(tab.dataset.file)));
+
+  // ============ BADGE ============
+  const evtBadgeSel = $('#evt-badge');
+  const evtBadgeCustom = $('#evt-badge-custom');
+  evtBadgeSel.addEventListener('change', () => {
+    const isCustom = evtBadgeSel.value === 'Custom…';
+    evtBadgeCustom.classList.toggle('hidden', !isCustom);
+    if (!isCustom) evtBadgeCustom.value = '';
+    updatePreview();
+  });
+
+  wireSegmented('par-typhoon-toggle', (on) => {
+    document.getElementById('typhoon-fields').classList.toggle('show', on);
+  });
+  wireSegmented('par-lpa-toggle', (on) => {
+    document.getElementById('lpa-fields').classList.toggle('show', on);
+  });
+  wireSegmented('par-itcz-toggle', (on) => {
+    document.getElementById('itcz-fields').classList.toggle('show', on);
+  });
+  $('#par-itcz-dir').addEventListener('change', () => {
+    const isCustom = $('#par-itcz-dir').value === 'Custom…';
+    $('#par-itcz-dir-custom').classList.toggle('hidden', !isCustom);
+    if (!isCustom) $('#par-itcz-dir-custom').value = '';
+  });
+
+  function updatePreview() {
+    if (currentFile !== 'announcement') return;
+    if (isSectionHidden('event')) return;
+    const custom = evtBadgeSel.value === 'Custom…' ? evtBadgeCustom.value.trim() : evtBadgeSel.value;
+    const badge = custom || 'Upcoming Event';
+    const title = $('#evt-headline').value.trim() || 'Portfolio Day this Friday';
+    const body = $('#evt-body').value.trim() || 'Parents and guardians are encouraged to attend.';
+    $('#preview-badge').textContent = badge;
+    $('#preview-headline').textContent = title;
+    $('#preview-body').textContent = body;
+  }
+  ['#evt-badge','#evt-badge-custom','#evt-headline','#evt-body'].forEach((sel) => {
+    const el = $(sel);
+    if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
+  });
+
+  // ============ BUILDERS ============
+  function buildAnnouncement() {
+    const hideToday = isSectionHidden('today');
+    const hideEvent = isSectionHidden('event');
+    const out = {};
+
+    if (!hideToday) {
+      const h = $('#ann-headline').value.trim();
+      const b = $('#ann-body').value.trim();
+      out.today = {
+        headline: h || 'No announcements for today.',
+        body: b || 'Please check back later or refer to your class adviser.',
+      };
+    }
+
+    if (!hideEvent) {
+      let badge = evtBadgeSel.value === 'Custom…' ? evtBadgeCustom.value.trim() : evtBadgeSel.value;
+      if (!badge) badge = 'Upcoming Event';
+      const eh = $('#evt-headline').value.trim();
+      const eb = $('#evt-body').value.trim();
+      const ed = $('#evt-date').value;
+      out.event = {
+        badge: badge,
+        headline: eh || 'Portfolio Day this Friday',
+        body: eb || 'Parents and guardians are encouraged to attend.',
+        asOfDate: ed || '',
+      };
+    }
+
+    return out;
+  }
+  function buildSchoolStatus() {
+    return {
+      state: $('#ss-state').value,
+      message: $('#ss-message').value.trim(),
+      asOfDate: $('#ss-date').value || '',
+    };
+  }
+  function buildParStatus() {
+    const hasTyphoon = getSegValue('par-typhoon-toggle');
+    const name = $('#par-typhoon-name').value.trim();
+    const windRaw = $('#par-typhoon-wind').value.trim();
+    const wind = windRaw === '' ? 0 : Number(windRaw);
+    let loc = '';
+    if (hasTyphoon) {
+      const par = $('#par-typhoon-par').value;
+      const km = $('#par-typhoon-km').value.trim();
+      const dir = $('#par-typhoon-dir').value.trim();
+      const parts = [par];
+      if (km) parts.push(km.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' km');
+      loc = parts.join(' · ');
+      if (dir) loc += (km ? ' ' : ' ') + dir;
+    }
+    const hasLPA = getSegValue('par-lpa-toggle');
+    let lpaInfo = '';
+    if (hasLPA) {
+      const par = $('#par-lpa-par').value;
+      const km = $('#par-lpa-km').value.trim();
+      const dir = $('#par-lpa-dir').value.trim();
+      if (km && dir && par !== 'Outside PAR') {
+        lpaInfo = 'LPA ' + km.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' km ' + dir;
+      } else if (km && dir && par === 'Outside PAR') {
+        lpaInfo = 'LPA ' + km.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' km Outside PAR · ' + dir;
+      } else if (par && !km && !dir) {
+        lpaInfo = 'LPA ' + par;
+      } else {
+        const parts = ['LPA'];
+        if (km) parts.push(km.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' km');
+        if (dir) parts.push(dir);
+        lpaInfo = parts.join(' ').trim();
+      }
+    }
+    if (hasTyphoon && windRaw !== '' && (isNaN(wind) || wind < 0)) {
+      throw new Error('Typhoon wind must be a positive number.');
+    }
+
+    const hasITCZ = getSegValue('par-itcz-toggle');
+    let itczInfo = { place: '', speed: '', direction: '' };
+    if (hasITCZ) {
+      const place = $('#par-itcz-place').value.trim();
+      const speed = $('#par-itcz-speed').value;
+      let dir = $('#par-itcz-dir').value;
+      if (dir === 'Custom…') dir = $('#par-itcz-dir-custom').value.trim();
+      itczInfo = { place, speed, direction: dir };
+    }
+
+    return {
+      hasTyphoon: hasTyphoon,
+      typhoonInfo: { name, wind, location: loc },
+      hasLPA: hasLPA,
+      lpaInfo: lpaInfo,
+      hasITCZ: hasITCZ,
+      itczInfo: itczInfo,
+    };
+  }
+
+  function validate(obj, file) {
+    const errs = [];
+    if (file === 'announcement') {
+      if (Object.keys(obj).length === 0) {
+        errs.push('Output is empty — enable at least one section (Today or Event).');
+      }
+      if (obj.today !== undefined) {
+        if (typeof obj.today !== 'object' || Array.isArray(obj.today)) errs.push('"today" must be an object.');
+        else {
+          if (typeof obj.today.headline !== 'string') errs.push('today.headline must be a string.');
+          if (typeof obj.today.body !== 'string') errs.push('today.body must be a string.');
+        }
+      }
+      if (obj.event !== undefined) {
+        if (typeof obj.event !== 'object' || Array.isArray(obj.event)) errs.push('"event" must be an object.');
+        else {
+          if (typeof obj.event.badge !== 'string') errs.push('event.badge must be a string.');
+          if (typeof obj.event.headline !== 'string') errs.push('event.headline must be a string.');
+          if (typeof obj.event.body !== 'string') errs.push('event.body must be a string.');
+          if (typeof obj.event.asOfDate !== 'string') errs.push('event.asOfDate must be a string.');
+        }
+      }
+    } else if (file === 'school_status') {
+      if (typeof obj.state !== 'string') errs.push('"state" must be a string.');
+      else if (!['','NORMAL','MONITORING','SUSPENDED','EMERGENCY'].includes(obj.state))
+        errs.push('"state" must be one of "", NORMAL, MONITORING, SUSPENDED, EMERGENCY.');
+      if (typeof obj.message !== 'string') errs.push('"message" must be a string.');
+      if (typeof obj.asOfDate !== 'string') errs.push('"asOfDate" must be a string.');
+    } else if (file === 'par_status') {
+      if (typeof obj.hasTyphoon !== 'boolean') errs.push('"hasTyphoon" must be a boolean.');
+      if (!obj.typhoonInfo || typeof obj.typhoonInfo !== 'object') errs.push('Missing "typhoonInfo" object.');
+      else {
+        if (typeof obj.typhoonInfo.name !== 'string') errs.push('typhoonInfo.name must be a string.');
+        if (typeof obj.typhoonInfo.wind !== 'number') errs.push('typhoonInfo.wind must be a number.');
+        if (typeof obj.typhoonInfo.location !== 'string') errs.push('typhoonInfo.location must be a string.');
+      }
+      if (typeof obj.hasLPA !== 'boolean') errs.push('"hasLPA" must be a boolean.');
+      if (typeof obj.lpaInfo !== 'string') errs.push('"lpaInfo" must be a string.');
+      if (obj.hasITCZ !== undefined && typeof obj.hasITCZ !== 'boolean') {
+        errs.push('"hasITCZ" must be a boolean.');
+      }
+      if (obj.itczInfo !== undefined) {
+        if (!obj.itczInfo || typeof obj.itczInfo !== 'object' || Array.isArray(obj.itczInfo)) {
+          errs.push('"itczInfo" must be an object.');
+        } else {
+          if (typeof obj.itczInfo.place !== 'string') errs.push('itczInfo.place must be a string.');
+          if (typeof obj.itczInfo.speed !== 'string') errs.push('itczInfo.speed must be a string.');
+          if (typeof obj.itczInfo.direction !== 'string') errs.push('itczInfo.direction must be a string.');
+        }
+      }
+    }
+    return errs;
+  }
+
+  function softWarnings(obj, file) {
+    const warns = [];
+    const today = new Date(); today.setHours(0,0,0,0);
+    const placeholder = /\b(e\.g\.|lorem ipsum|example|test|placeholder)\b/i;
+    function checkDate(d, field) {
+      if (!d) return;
+      const parsed = new Date(d + 'T00:00:00');
+      if (isNaN(parsed.getTime())) { warns.push(`"${field}" is not a valid date (${d}).`); return; }
+      if (parsed < today) warns.push(`"${field}" is in the past (${d}). Double-check before publishing.`);
+    }
+    function checkText(str, field, minLen) {
+      if (!str) return;
+      if (str.length < (minLen || 4)) warns.push(`"${field}" looks very short. Is it intentional?`);
+      if (placeholder.test(str)) warns.push(`"${field}" contains placeholder-looking text.`);
+    }
+    if (file === 'announcement') {
+      const hideToday = isSectionHidden('today');
+      const hideEvent = isSectionHidden('event');
+      if (hideToday && hideEvent) {
+        warns.push('Both sections are hidden — the output will be an empty object {}. Enable at least one section.');
+      }
+      if (!hideToday) {
+        checkText(obj.today?.headline, 'today.headline', 8);
+        checkText(obj.today?.body, 'today.body', 15);
+      }
+      if (!hideEvent) {
+        checkText(obj.event?.headline, 'event.headline', 8);
+        checkText(obj.event?.body, 'event.body', 15);
+        checkDate(obj.event?.asOfDate, 'event.asOfDate');
+      }
+    } else if (file === 'school_status') {
+      checkText(obj.message, 'message', 10);
+      checkDate(obj.asOfDate, 'asOfDate');
+      if (obj.state === 'EMERGENCY' && !/lockdown|evacuat|incident|emergency/i.test(obj.message)) {
+        warns.push('State is EMERGENCY but the message doesn\'t mention lockdown/evacuation. Add context.');
+      }
+      if (obj.state === 'SUSPENDED' && !/suspend|class/i.test(obj.message)) {
+        warns.push('State is SUSPENDED but the message doesn\'t mention classes. Add context.');
+      }
+    } else if (file === 'par_status') {
+      if (obj.hasTyphoon) {
+        if (!obj.typhoonInfo.name) warns.push('Typhoon is set but the name is empty.');
+        if (obj.typhoonInfo.wind > 250) warns.push(`Wind is unusually high (${obj.typhoonInfo.wind} km/h). Double-check.`);
+        if (obj.typhoonInfo.wind === 0) warns.push('Typhoon is set but wind is 0 km/h.');
+        if (!obj.typhoonInfo.location) warns.push('Typhoon is set but the location is empty.');
+        checkText(obj.typhoonInfo.name, 'typhoonInfo.name', 4);
+      }
+      if (obj.hasLPA && !obj.lpaInfo) warns.push('LPA is set but lpaInfo is empty.');
+      if (obj.hasITCZ) {
+        if (!obj.itczInfo?.place) warns.push('ITCZ is set but the affected place is empty.');
+        if (!obj.itczInfo?.speed) warns.push('ITCZ is set but the wind speed is empty.');
+        if (!obj.itczInfo?.direction) warns.push('ITCZ is set but the wind direction is empty.');
+      }
+      if (!obj.hasTyphoon && !obj.hasLPA && !obj.hasITCZ) {
+        warns.push('Typhoon, LPA, and ITCZ are all "No" — the dashboard will show "Clear".');
+      }
+    }
+    return warns;
+  }
+
+  // ============ DRAFT STORAGE ============
+  function loadDrafts() {
+    try {
+      const raw = localStorage.getItem(STORAGE.DRAFTS);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveDrafts(arr) {
+    try { localStorage.setItem(STORAGE.DRAFTS, JSON.stringify(arr)); } catch (e) {}
+    updateDraftsBadge();
+    renderDrafts();
+  }
+  function addDraft(file, json) {
+    const arr = loadDrafts();
+    const existingIdx = arr.findIndex((d) => d.json === json && d.file === file);
+    if (existingIdx >= 0) arr.splice(existingIdx, 1);
+    arr.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      file: file, json: json, timestamp: Date.now(),
+    });
+    if (arr.length > MAX_DRAFTS) arr.length = MAX_DRAFTS;
+    saveDrafts(arr);
+  }
+  function updateDraftsBadge() {
+    const n = loadDrafts().length;
+    const badge = $('#draftsBadge');
+    badge.textContent = n > 99 ? '99+' : n;
+    badge.classList.toggle('hidden', n === 0);
+  }
+  function fmtTime(ts) {
+    const d = new Date(ts); const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  const openDraftIds = new Set();
+
+  function renderDrafts() {
+    const body = $('#draftsBody');
+    const arr = loadDrafts();
+    if (arr.length === 0) {
+      body.innerHTML = `<div class="drawer-empty"><span class="big">📭</span>No drafts yet.<br>Every generated JSON is auto-saved here.</div>`;
+      return;
+    }
+    body.innerHTML = arr.map((d) => {
+      const preview = d.json.replace(/\s+/g, ' ').slice(0, 90);
+      const isOpen = openDraftIds.has(d.id);
+      return `
+        <div class="draft-item${isOpen ? ' open' : ''}" data-id="${d.id}">
+          <div class="draft-summary" role="button" tabindex="0" aria-expanded="${isOpen}">
+            <div class="draft-chev">▶</div>
+            <div class="draft-summary-main">
+              <div class="draft-meta">
+                <span class="draft-file">${d.file.replace('_', ' ')}</span>
+                <span>${fmtTime(d.timestamp)}</span>
+              </div>
+              <div class="draft-preview">${escapeHtml(preview)}${d.json.length > 90 ? '…' : ''}</div>
+            </div>
+          </div>
+          <div class="draft-detail">
+            <div class="draft-detail-inner">
+              <pre class="draft-json">${escapeHtml(d.json)}</pre>
+              <div class="draft-actions">
+                <button class="btn" data-action="load">📥 Load</button>
+                <button class="btn" data-action="copy">📋 Copy</button>
+                <button class="btn btn-delete" data-action="delete">🗑️ Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    body.querySelectorAll('.draft-item').forEach((el) => {
+      const id = el.dataset.id;
+      const summary = el.querySelector('.draft-summary');
+      const toggle = () => {
+        const isOpen = el.classList.toggle('open');
+        summary.setAttribute('aria-expanded', isOpen);
+        if (isOpen) openDraftIds.add(id);
+        else openDraftIds.delete(id);
+      };
+      summary.addEventListener('click', toggle);
+      summary.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+      el.querySelector('[data-action="load"]').addEventListener('click', (e) => { e.stopPropagation(); loadDraft(id); });
+      el.querySelector('[data-action="copy"]').addEventListener('click', (e) => { e.stopPropagation(); copyDraft(id); });
+      el.querySelector('[data-action="delete"]').addEventListener('click', (e) => { e.stopPropagation(); deleteDraft(id); });
+    });
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function loadDraft(id) {
+    const arr = loadDrafts();
+    const d = arr.find((x) => x.id === id);
+    if (!d) return;
+    if (currentFile !== d.file) switchFile(d.file);
+    setMode('paste');
+    $('#pasteInput').value = d.json;
+    setTimeout(() => { $('#loadPasteBtn').click(); }, 50);
+    closeDrawer();
+  }
+  async function copyDraft(id) {
+    const arr = loadDrafts();
+    const d = arr.find((x) => x.id === id);
+    if (!d) return;
+    await copyToClipboard(d.json);
+    const el = document.querySelector(`.draft-item[data-id="${id}"] [data-action="copy"]`);
+    if (el) {
+      const old = el.textContent;
+      el.textContent = '✓ Copied';
+      setTimeout(() => { el.textContent = old; }, 1400);
+    }
+  }
+  function deleteDraft(id) {
+    const arr = loadDrafts().filter((x) => x.id !== id);
+    openDraftIds.delete(id);
+    saveDrafts(arr);
+  }
+
+  // ============ DRAWER ============
+  const drawerOverlay = $('#drawerOverlay');
+  const drawer = $('#draftsDrawer');
+  function openDrawer() {
+    drawerOverlay.classList.add('open');
+    drawer.classList.add('open');
+    renderDrafts();
+  }
+  function closeDrawer() {
+    drawerOverlay.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+  $('#draftsBtn').addEventListener('click', openDrawer);
+  $('#closeDrawerBtn').addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  // ============ DASHBOARD URL ============
+  const dashBtn = $('#dashBtn');
+  const dashLabel = $('#dashLabel');
+  const dashDialogOverlay = $('#dashDialogOverlay');
+  const dashDialogInput = $('#dashDialogInput');
+
+  function getDashboardUrl() {
+    try { return localStorage.getItem(STORAGE.DASHBOARD) || ''; } catch (e) { return ''; }
+  }
+  function setDashboardUrl(url) {
+    try {
+      if (url) localStorage.setItem(STORAGE.DASHBOARD, url);
+      else localStorage.removeItem(STORAGE.DASHBOARD);
+    } catch (e) {}
+    refreshDashButton();
+  }
+  function refreshDashButton() {
+    const url = getDashboardUrl();
+    if (url) {
+      dashBtn.classList.remove('empty');
+      dashLabel.textContent = 'Dashboard';
+      dashBtn.title = 'Open dashboard · long-press to edit URL';
+    } else {
+      dashBtn.classList.add('empty');
+      dashLabel.textContent = 'Set dashboard';
+      dashBtn.title = 'Tap to set dashboard URL';
+    }
+    const input = $('#dashUrlInput');
+    if (input) input.value = url;
+  }
+
+  let holdTimer = null;
+  let didHold = false;
+  let pointerActive = false;
+  let justOpened = false;
+
+  function onPointerDown(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerActive = true;
+    didHold = false;
+    dashBtn.classList.add('holding');
+    holdTimer = setTimeout(() => {
+      didHold = true;
+      dashBtn.classList.remove('holding');
+      openDashDialog();
+    }, 600);
+  }
+  function onPointerUp(e) {
+    if (!pointerActive) return;
+    pointerActive = false;
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    dashBtn.classList.remove('holding');
+    if (didHold) { didHold = false; return; }
+    if (justOpened) { justOpened = false; return; }
+    const url = getDashboardUrl();
+    if (url) {
+      justOpened = true;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => { justOpened = false; }, 500);
+    } else {
+      openDashDialog();
+    }
+  }
+  function onPointerCancel() {
+    pointerActive = false;
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    dashBtn.classList.remove('holding');
+    didHold = false;
+  }
+  dashBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
+  dashBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+  dashBtn.addEventListener('pointerdown', onPointerDown);
+  dashBtn.addEventListener('pointerup', onPointerUp);
+  dashBtn.addEventListener('pointercancel', onPointerCancel);
+  dashBtn.addEventListener('pointerleave', onPointerCancel);
+  if (!window.PointerEvent) {
+    dashBtn.addEventListener('mousedown', onPointerDown);
+    dashBtn.addEventListener('mouseup', onPointerUp);
+    dashBtn.addEventListener('mouseleave', onPointerCancel);
+    dashBtn.addEventListener('touchstart', (e) => { e.preventDefault(); onPointerDown(e); }, { passive: false });
+    dashBtn.addEventListener('touchend', (e) => { e.preventDefault(); onPointerUp(e); }, { passive: false });
+    dashBtn.addEventListener('touchcancel', onPointerCancel);
+  }
+
+  function openDashDialog() {
+    dashDialogInput.value = getDashboardUrl();
+    dashDialogOverlay.classList.add('open');
+    setTimeout(() => dashDialogInput.focus(), 100);
+  }
+  function closeDashDialog() { dashDialogOverlay.classList.remove('open'); }
+  $('#dashDialogCancel').addEventListener('click', closeDashDialog);
+  $('#dashDialogSave').addEventListener('click', () => {
+    let val = dashDialogInput.value.trim();
+    if (val && !/^https?:\/\//i.test(val)) val = 'https://' + val;
+    setDashboardUrl(val);
+    closeDashDialog();
+  });
+  dashDialogInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#dashDialogSave').click();
+    if (e.key === 'Escape') closeDashDialog();
+  });
+  dashDialogOverlay.addEventListener('click', (e) => {
+    if (e.target === dashDialogOverlay) closeDashDialog();
+  });
+
+  $('#dashSaveBtn').addEventListener('click', () => {
+    let val = $('#dashUrlInput').value.trim();
+    if (val && !/^https?:\/\//i.test(val)) val = 'https://' + val;
+    setDashboardUrl(val);
+    const hint = $('#dashHint');
+    hint.textContent = val ? '✅ Saved. Tap 🖥️ in the app bar to open. Long-press to edit.' : 'Leave blank to disable the dashboard button.';
+    setTimeout(() => { hint.textContent = 'Leave blank to disable the dashboard button.'; }, 3000);
+  });
+  $('#dashUrlInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#dashSaveBtn').click();
+  });
+
+  // ============ EDIT URL (DEPLOY) ============
+  const deployBtn = $('#deployBtn');
+  const deployHint = $('#deployHint');
+
+  function getEditUrlBase() {
+    try { return localStorage.getItem(STORAGE.EDIT_URL) || ''; } catch (e) { return ''; }
+  }
+  function setEditUrlBase(url) {
+    let v = url.trim();
+    if (!v) { try { localStorage.removeItem(STORAGE.EDIT_URL); } catch (e) {} }
+    else {
+      if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+      v = v.replace(/\/[^\/]+\.json$/i, '/');
+      if (!/\/$/.test(v)) v += '/';
+      try { localStorage.setItem(STORAGE.EDIT_URL, v); } catch (e) {}
+    }
+    refreshEditUrlUI();
+    refreshDeployButton();
+  }
+  function buildDeployUrl() {
+    const base = getEditUrlBase();
+    if (!base) return null;
+    return base + currentFile + '.json';
+  }
+  function refreshEditUrlUI() {
+    const base = getEditUrlBase();
+    const input = $('#editUrlInput');
+    const status = $('#editUrlStatus');
+    if (input) input.value = base;
+    if (status) {
+      if (base) {
+        status.textContent = '✅ Configured. Example: ' + base + currentFile + '.json';
+        status.className = 'edit-url-status configured';
+      } else {
+        status.textContent = 'Not configured — deploy button is hidden.';
+        status.className = 'edit-url-status';
+      }
+    }
+  }
+  function refreshDeployButton() {
+    const url = buildDeployUrl();
+    if (url && lastJSON) {
+      deployBtn.href = url;
+      deployBtn.hidden = false;
+      deployHint.hidden = true;
+    } else if (url && !lastJSON) {
+      deployBtn.hidden = true;
+      deployHint.hidden = true;
+    } else {
+      deployBtn.hidden = true;
+      deployHint.hidden = false;
+    }
+  }
+
+  $('#editUrlSaveBtn').addEventListener('click', () => {
+    setEditUrlBase($('#editUrlInput').value);
+  });
+  $('#editUrlInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#editUrlSaveBtn').click();
+  });
+  $('#deployHintLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    mainPage.classList.add('hidden');
+    settingsPage.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const acc = $('#editUrlAccordion');
+    if (acc && !acc.classList.contains('open')) acc.classList.add('open');
+    setTimeout(() => { $('#editUrlInput')?.focus(); }, 350);
+  });
+
+  // ============ PASTE MODE ============
+  $('#loadPasteBtn').addEventListener('click', () => {
+    const raw = $('#pasteInput').value.trim();
+    const warningsEl = $('#pasteWarnings');
+    warningsEl.innerHTML = '';
+    if (!raw) {
+      warningsEl.innerHTML = '<strong>⚠️ Nothing to load</strong><ul><li>Paste some JSON first.</li></ul>';
+      return;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      warningsEl.innerHTML = `<strong>❌ Invalid JSON</strong><ul><li>${escapeHtml(e.message)}</li><li>Check for missing commas, unclosed quotes, or trailing commas.</li></ul>`;
+      return;
+    }
+    const errs = validate(parsed, currentFile);
+    if (errs.length) {
+      warningsEl.innerHTML = `<strong>❌ Structure mismatch</strong><ul>${errs.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`;
+      return;
+    }
+    populateForm(parsed, currentFile);
+    setMode('form');
+    switchFile(currentFile);
+    lastJSON = JSON.stringify(parsed, null, 2);
+    $('#outputArea').textContent = lastJSON;
+    $('#outputArea').classList.remove('error');
+    $('#outBadge').textContent = 'loaded';
+    $('#outBadge').className = 'chip ok';
+    $('#copyBtn').disabled = false;
+    $('#downloadBtn').disabled = false;
+    refreshDeployButton();
+    const warns = softWarnings(parsed, currentFile);
+    renderWarnings(warns);
+    const r = $('#loadPasteBtn').getBoundingClientRect();
+    blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 120, spread: Math.PI * 2, angle: -Math.PI / 2 });
+  });
+  $('#clearPasteBtn').addEventListener('click', () => {
+    $('#pasteInput').value = '';
+    $('#pasteWarnings').innerHTML = '';
+  });
+
+  function populateForm(obj, file) {
+    if (file === 'announcement') {
+      const hasToday = obj.today !== undefined;
+      const hasEvent = obj.event !== undefined;
+      const todayEmpty = hasToday ? (!obj.today.headline && !obj.today.body) : true;
+      const eventEmpty = hasEvent
+        ? (!obj.event.badge && !obj.event.headline && !obj.event.body && !obj.event.asOfDate)
+        : true;
+      setSectionHidden('today', todayEmpty);
+      setSectionHidden('event', eventEmpty);
+
+      $('#ann-headline').value = hasToday ? (obj.today.headline || '') : '';
+      $('#ann-body').value = hasToday ? (obj.today.body || '') : '';
+      const badgeVal = hasEvent ? (obj.event.badge || 'Upcoming Event') : 'Upcoming Event';
+      const known = ['Upcoming Event','Reminder','Postponed','Cancelled','Important'];
+      if (known.includes(badgeVal)) {
+        evtBadgeSel.value = badgeVal;
+        evtBadgeCustom.value = '';
+        evtBadgeCustom.classList.add('hidden');
+      } else if (badgeVal) {
+        evtBadgeSel.value = 'Custom…';
+        evtBadgeCustom.value = badgeVal;
+        evtBadgeCustom.classList.remove('hidden');
+      } else {
+        evtBadgeSel.value = 'Upcoming Event';
+        evtBadgeCustom.value = '';
+        evtBadgeCustom.classList.add('hidden');
+      }
+      $('#evt-headline').value = hasEvent ? (obj.event.headline || '') : '';
+      $('#evt-body').value = hasEvent ? (obj.event.body || '') : '';
+      $('#evt-date').value = hasEvent ? (obj.event.asOfDate || '') : '';
+      $$('#form-announcement [data-count]').forEach(setCounter);
+      updatePreview();
+    } else if (file === 'school_status') {
+      const allowed = ['','NORMAL','MONITORING','SUSPENDED','EMERGENCY'];
+      $('#ss-state').value = allowed.includes(obj.state) ? obj.state : '';
+      $('#ss-message').value = obj.message || '';
+      $('#ss-date').value = obj.asOfDate || '';
+      $$('#form-school_status [data-count]').forEach(setCounter);
+    } else if (file === 'par_status') {
+      const setSeg = (groupId, val) => {
+        const g = document.getElementById(groupId);
+        g.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.val === String(val)));
+      };
+      setSeg('par-typhoon-toggle', obj.hasTyphoon);
+      document.getElementById('typhoon-fields').classList.toggle('show', obj.hasTyphoon);
+      $('#par-typhoon-name').value = obj.typhoonInfo?.name || '';
+      $('#par-typhoon-wind').value = obj.typhoonInfo?.wind ?? '';
+      const parseLoc = (locStr) => {
+        if (!locStr) return { par: 'Inside PAR', km: '', dir: '' };
+        const par = /Outside PAR/.test(locStr) ? 'Outside PAR' : 'Inside PAR';
+        const kmMatch = locStr.match(/([\d,]+)\s*km/);
+        const km = kmMatch ? kmMatch[1].replace(/,/g, '') : '';
+        let dir = '';
+        if (kmMatch) {
+          const idx = locStr.indexOf(kmMatch[0]) + kmMatch[0].length;
+          dir = locStr.slice(idx).replace(/^[\s·-]+/, '').trim();
+        } else {
+          const idx = locStr.indexOf('PAR');
+          if (idx >= 0) dir = locStr.slice(idx + 3).replace(/^[\s·-]+/, '').trim();
+        }
+        return { par, km, dir };
+      };
+      const tLoc = parseLoc(obj.typhoonInfo?.location || '');
+      $('#par-typhoon-par').value = tLoc.par;
+      $('#par-typhoon-km').value = tLoc.km;
+      $('#par-typhoon-dir').value = tLoc.dir;
+
+      setSeg('par-lpa-toggle', obj.hasLPA);
+      document.getElementById('lpa-fields').classList.toggle('show', obj.hasLPA);
+      const lpaStr = obj.lpaInfo || '';
+      const lpaKmMatch = lpaStr.match(/([\d,]+)\s*km/);
+      const lpaPar = /Outside PAR/.test(lpaStr) ? 'Outside PAR' : 'Inside PAR';
+      let lpaDir = '';
+      if (lpaKmMatch) {
+        const idx = lpaStr.indexOf(lpaKmMatch[0]) + lpaKmMatch[0].length;
+        lpaDir = lpaStr.slice(idx).replace(/^[\s·-]+/, '').replace(/^Outside PAR\s*·?\s*/i, '').trim();
+      }
+      $('#par-lpa-par').value = lpaPar;
+      $('#par-lpa-km').value = lpaKmMatch ? lpaKmMatch[1].replace(/,/g, '') : '';
+      $('#par-lpa-dir').value = lpaDir;
+
+      // ITCZ
+      const hasITCZ = obj.hasITCZ === true;
+      setSeg('par-itcz-toggle', hasITCZ);
+      document.getElementById('itcz-fields').classList.toggle('show', hasITCZ);
+      $('#par-itcz-place').value = obj.itczInfo?.place || '';
+      const speed = obj.itczInfo?.speed || 'Light to Moderate';
+      const speedSel = $('#par-itcz-speed');
+      if ([...speedSel.options].some((o) => o.value === speed)) speedSel.value = speed;
+      else speedSel.value = 'Light to Moderate';
+      const dirVal = obj.itczInfo?.direction || 'Northeast to Northwest';
+      const dirSel = $('#par-itcz-dir');
+      if ([...dirSel.options].some((o) => o.value === dirVal)) {
+        dirSel.value = dirVal;
+        $('#par-itcz-dir-custom').classList.add('hidden');
+        $('#par-itcz-dir-custom').value = '';
+      } else {
+        dirSel.value = 'Custom…';
+        $('#par-itcz-dir-custom').classList.remove('hidden');
+        $('#par-itcz-dir-custom').value = dirVal;
+      }
+      $$('#form-par_status [data-count]').forEach(setCounter);
+      updateLocCounter();
+    }
+  }
+
+  function renderWarnings(warns) {
+    const block = $('#warningsBlock');
+    if (!warns || warns.length === 0) { block.innerHTML = ''; return; }
+    block.innerHTML = `<strong>💡 Heads up (not blocking)</strong><ul>${warns.map((w) => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`;
+  }
+
+  // ============ GENERATE ============
+  $('#generateBtn').addEventListener('click', async () => {
+    if (currentMode === 'paste') setMode('form');
+    try {
+      let obj;
+      if (currentFile === 'announcement') obj = buildAnnouncement();
+      else if (currentFile === 'school_status') obj = buildSchoolStatus();
+      else obj = buildParStatus();
+
+      const errs = validate(obj, currentFile);
+      if (errs.length) throw new Error(errs.join('\n• '));
+
+      lastJSON = JSON.stringify(obj, null, 2);
+      const out = $('#outputArea');
+      out.textContent = lastJSON;
+      out.classList.remove('error');
+      out.scrollTop = 0;
+
+      const copied = await copyToClipboard(lastJSON);
+
+      $('#outBadge').textContent = copied ? 'copied ✓' : 'valid';
+      $('#outBadge').className = 'chip ok';
+      $('#copyBtn').disabled = false;
+      $('#downloadBtn').disabled = false;
+
+      if (copied) {
+        const cb = $('#copyBtn');
+        cb.classList.remove('copy-flash');
+        void cb.offsetWidth;
+        cb.classList.add('copy-flash');
+        setTimeout(() => cb.classList.remove('copy-flash'), 700);
+      }
+
+      const warns = softWarnings(obj, currentFile);
+      renderWarnings(warns);
+
+      addDraft(currentFile, lastJSON);
+      refreshDeployButton();
+
+      const r = $('#generateBtn').getBoundingClientRect();
+      blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 180, spread: Math.PI * 2, angle: -Math.PI / 2 });
+    } catch (err) {
+      const out = $('#outputArea');
+      out.textContent = '❌ ' + err.message;
+      out.classList.add('error');
+      $('#outBadge').textContent = 'error';
+      $('#outBadge').className = 'chip err';
+      $('#copyBtn').disabled = true;
+      $('#downloadBtn').disabled = true;
+      $('#warningsBlock').innerHTML = '';
+      lastJSON = null;
+      refreshDeployButton();
+    }
+  });
+
+  $('#copyBtn').addEventListener('click', async () => {
+    if (!lastJSON) return;
+    await copyToClipboard(lastJSON);
+    const r = $('#copyBtn').getBoundingClientRect();
+    blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 80, spread: Math.PI * 2, angle: -Math.PI / 2 });
+    $('#outBadge').textContent = 'copied';
+    $('#outBadge').className = 'chip ok';
+  });
+
+  $('#downloadBtn').addEventListener('click', () => {
+    if (!lastJSON) return;
+    const filename = currentFile + '.json';
+    const blob = new Blob([lastJSON], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const r = $('#downloadBtn').getBoundingClientRect();
+    blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 80, spread: Math.PI * 2, angle: -Math.PI / 2 });
+    $('#outBadge').textContent = 'downloaded';
+    $('#outBadge').className = 'chip ok';
+  });
+
+  deployBtn.addEventListener('click', async () => {
+    if (lastJSON) {
+      await copyToClipboard(lastJSON);
+      $('#outBadge').textContent = 'copied · opening…';
+      $('#outBadge').className = 'chip ok';
+    }
+    const r = deployBtn.getBoundingClientRect();
+    blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 120, spread: Math.PI * 2, angle: -Math.PI / 2 });
+  });
+
+  $('#resetBtn').addEventListener('click', () => {
+    if (currentMode === 'paste') {
+      $('#pasteInput').value = '';
+      $('#pasteWarnings').innerHTML = '';
+      resetOutput();
+      return;
+    }
+    const sec = document.getElementById('form-' + currentFile);
+    sec.querySelectorAll('input[type="text"], input[type="date"], input[type="number"], input[type="url"], textarea').forEach((el) => {
+      el.value = '';
+      el.classList.remove('over');
+    });
+    sec.querySelectorAll('select').forEach((s) => { s.selectedIndex = 0; });
+    sec.querySelectorAll('[data-count]').forEach(setCounter);
+
+    if (currentFile === 'announcement') {
+      setSectionHidden('today', false);
+      setSectionHidden('event', false);
+      evtBadgeCustom.classList.add('hidden');
+      evtBadgeSel.value = 'Upcoming Event';
+      updatePreview();
+    }
+    if (currentFile === 'par_status') {
+      ['par-typhoon-toggle','par-lpa-toggle','par-itcz-toggle'].forEach((gid) => {
+        const g = document.getElementById(gid);
+        g.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === 0));
+      });
+      document.getElementById('typhoon-fields').classList.remove('show');
+      document.getElementById('lpa-fields').classList.remove('show');
+      document.getElementById('itcz-fields').classList.remove('show');
+      $('#par-itcz-dir-custom').classList.add('hidden');
+      $('#par-itcz-dir').value = 'Northeast to Northwest';
+      $('#par-itcz-speed').value = 'Light to Moderate';
+      updateLocCounter();
+    }
+    resetOutput();
+  });
+
+  // ============ NAVIGATION ============
+  const mainPage = $('#mainPage');
+  const settingsPage = $('#settingsPage');
+  $('#settingsBtn').addEventListener('click', () => {
+    mainPage.classList.add('hidden');
+    settingsPage.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  $('#backBtn').addEventListener('click', () => {
+    settingsPage.classList.remove('show');
+    mainPage.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  $$('.accordion-head').forEach((head) => {
+    head.addEventListener('click', () => {
+      const acc = head.parentElement;
+      const open = acc.classList.toggle('open');
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  $$('.crypto-addr').forEach((el) => {
+    const copyFn = async () => {
+      await copyToClipboard(el.dataset.address);
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 650);
+      const r = el.getBoundingClientRect();
+      blast({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 50, spread: Math.PI * 2, angle: -Math.PI / 2 });
+    };
+    el.addEventListener('click', copyFn);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyFn(); }
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      $('#generateBtn').click();
+    }
+  });
+
+  // ============ INIT ============
+  wireCounters();
+  wireHideToggles();
+  switchFile('announcement');
+  updatePreview();
+  updateLocCounter();
+  refreshDashButton();
+  refreshEditUrlUI();
+  updateDraftsBadge();
+  renderDrafts();
+})();
+</script>
+</body>
+</html>
