@@ -1724,12 +1724,12 @@
         const ANNOUNCEMENT_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/announcement.json';
         const STATUS_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/school_status.json';
         const PAR_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/par_status.json';
-        const PAR_REFRESH_MS = 60 * 60 * 1000; // 1 hour
-
+        
         // How often to re-fetch the remote JSON.
         // GitHub's CDN caches raw files ~5 min, so values below 5 min won't help.
-        const ANNOUNCEMENT_REFRESH_MS = 5 * 60 * 1000; // 5 min
-        const STATUS_REFRESH_MS = 5 * 60 * 1000;       // 5 min
+        const ANNOUNCEMENT_REFRESH_MS = 15 * 60 * 1000; // 15 min
+        const STATUS_REFRESH_MS = 10 * 60 * 1000;       // 10 min
+        const PAR_REFRESH_MS = 60 * 60 * 1000; // 1 hour
 
         // =========================================
         // CONFIG
