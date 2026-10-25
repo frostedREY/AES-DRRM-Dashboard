@@ -463,6 +463,13 @@
             border: 1px solid rgba(239, 98, 98, 0.3);
             flex-shrink: 0;
         }
+        
+
+        /* ADD THIS: Blue theme when only ITCZ is active */
+        .par-strip.itcz-active {
+         background: linear-gradient(135deg, #10223a, #152a45);
+         border-color: rgba(77, 163, 255, 0.3);
+        }
 
         .par-strip.clear {
             background: linear-gradient(135deg, #10271d, #102f22);
@@ -1428,22 +1435,23 @@
         </div>
 
         <div class="par-strip" id="parStrip">
-            <div class="par-strip-icon" id="parStripIcon">
-                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
-                    <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
-                    <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
-                    <path d="M44 14 A20 20 0 0 1 56 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    <path d="M20 50 A20 20 0 0 1 8 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                </svg>
-            </div>
-            <div class="par-strip-text">
-                <div class="par-strip-label">PAR Weather Alert</div>
-                <div class="par-strip-title" id="parStripTitle">Super Typhoon Choi-wan</div>
-                <div class="par-strip-sub" id="parStripSub">
-                    Outside PAR · 2,605 km East of Extreme Northern Luzon · <strong>195 km/h</strong> max winds
-                </div>
-            </div>
+    <div class="par-strip-icon" id="parStripIcon">
+        <!-- Icon gets injected by JS -->
+    </div>
+    <div class="par-strip-text">
+        <div class="par-strip-label" id="parStripLabel">PAR Weather Alert</div>
+        
+        <!-- Main status (Typhoon, LPA, or Clear) -->
+        <div class="par-strip-title" id="parStripTitle"></div>
+        <div class="par-strip-sub" id="parStripSub"></div>
+
+        <!-- ITCZ row (hidden by default) -->
+        <div id="parITCZ" style="display:none; margin-top:0.6vh; padding-top:0.6vh; border-top: 1px solid rgba(255,255,255,0.15);">
+            <div class="par-strip-title" style="color:#4da3ff; font-size: 0.9em;">Intertropical Convergence Zone (ITCZ)</div>
+            <div class="par-strip-sub" id="parITCZSub"></div>
+        </div>
+    </div>
+</div>
         </div>
 
         <div class="source-note">
@@ -1499,7 +1507,7 @@
     <!-- SCHOOL STATUS -->
     <section class="widget school-status" id="schoolStatusWidget" data-state="NORMAL" aria-label="School status and emergency contacts">
         <div class="widget-header">
-            <div class="widget-title" id="schoolStatusTitle" title="Long-press for 3 seconds to edit">
+            <div class="widget-title" id="schoolStatusTitle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
                     <path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>
@@ -1585,7 +1593,7 @@
     <!-- SCHOOL ANNOUNCEMENT -->
     <section class="widget announcement-card" aria-label="School announcement">
         <div class="widget-header">
-            <div class="widget-title" id="announcementTitle" title="Long-press for 3 seconds to edit">
+            <div class="widget-title" id="announcementTitle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 11l18-5v12L3 14v-3z"/>
                     <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
@@ -1709,16 +1717,14 @@
 <script>
     (function() {
         'use strict';
-
-        // =========================================
-        // ⚠️ EDIT THESE TWO URLS BEFORE UPLOADING
-        // =========================================
         // Replace YOUR_USERNAME and YOUR_REPO with your actual GitHub details.
         // To get the URL: open the .json file on GitHub, click the "Raw" button,
         // and copy the address bar URL. It should start with
         // "https://raw.githubusercontent.com/"
         const ANNOUNCEMENT_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/announcement.json';
         const STATUS_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/school_status.json';
+        const PAR_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/par_status.json';
+        const PAR_REFRESH_MS = 5 * 60 * 1000; // 1 hour
 
         // How often to re-fetch the remote JSON.
         // GitHub's CDN caches raw files ~5 min, so values below 5 min won't help.
@@ -2310,79 +2316,173 @@
             return d.toISOString().split('T')[0];
         }
 
-        // NEWS
-        async function fetchNews() {
-            try {
-                const url = RSS2JSON_URL + encodeURIComponent(PHILSTAR_RSS);
-                const response = await fetch(url, { cache: 'no-store' });
-                if (!response.ok) throw new Error('HTTP ' + response.status);
+       // =========================================
+// NEWS HEADLINES — with Fallback Proxy
+// =========================================
 
-                const data = await response.json();
-                if (data.status !== 'ok' || !data.items || data.items.length === 0) {
-                    throw new Error('No news items returned');
-                }
-
-                const headlines = data.items.slice(0, 3);
-                newsList.innerHTML = headlines.map(item => {
-                    const title = item.title || 'Untitled';
-                    const ago = timeAgo(item.pubDate);
-                    const link = item.link || '#';
-
-                    return `
-                        <a class="news-item" href="${link}" target="_blank" rel="noopener">
-                            <div class="news-headline">${title}</div>
-                            <div class="news-meta">
-                                <span class="news-source">Philstar</span>
-                                ${ago ? '<span>·</span><span>' + ago + '</span>' : ''}
-                            </div>
-                        </a>`;
-                }).join('');
-
-                newsStatusEl.innerHTML = '<span class="status-dot green"></span>LIVE';
-
-            } catch (error) {
-                console.error('News fetch failed:', error);
-                newsStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
-                newsList.innerHTML = `<div class="news-loading">News headlines temporarily unavailable.</div>`;
+// Helper: try rss2json, then fall back to AllOrigins
+async function fetchFeedWithFallback(rssUrl) {
+    // Attempt 1: rss2json (returns clean JSON directly)
+    try {
+        const rss2jsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+        const response = await fetch(rss2jsonUrl, { cache: 'no-store' });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status === 'ok' && data.items && data.items.length > 0) {
+                return data.items;
             }
         }
+    } catch (e) {
+        console.warn('[News] rss2json failed, trying fallback:', e.message);
+    }
 
-        // PAR STRIP
-        function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo) {
-            if (hasTyphoon) {
-                parStrip.classList.remove('clear');
-                parStripIcon.innerHTML = `
-                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
-                        <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
-                        <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
-                        <path d="M44 14 A20 20 0 0 1 56 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <path d="M20 50 A20 20 0 0 1 8 32" stroke="#f2b84b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    </svg>`;
-                parStripTitle.textContent = typhoonInfo.name;
-                parStripSub.innerHTML = `${typhoonInfo.location} · <strong>${typhoonInfo.wind} km/h</strong> max winds`;
-            } else if (hasLPA) {
-                parStrip.classList.remove('clear');
-                parStripIcon.innerHTML = `
-                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="32" cy="32" r="14" fill="#4da3ff" opacity="0.15"/>
-                        <path d="M32 18 A14 14 0 0 1 46 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
-                        <path d="M32 46 A14 14 0 0 1 18 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
-                        <circle cx="32" cy="32" r="5" fill="#4da3ff"/>
-                    </svg>`;
-                parStripTitle.textContent = 'Low Pressure Area';
-                parStripSub.innerHTML = lpaInfo || 'LPA being monitored inside PAR.';
-            } else {
-                parStrip.classList.add('clear');
-                parStripIcon.innerHTML = `
-                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/>
-                        <path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>`;
-                parStripTitle.textContent = 'No Typhoon or LPA in PAR';
-                parStripSub.innerHTML = 'Philippine Area of Responsibility is clear. Continue monitoring PAGASA bulletins.';
-            }
+    // Attempt 2: AllOrigins (fetches raw XML, we parse it ourselves)
+    try {
+        const alloriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl);
+        const response = await fetch(alloriginsUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        const items = xmlDoc.querySelectorAll('item');
+
+        // Convert the XML items into the same shape rss2json returns
+        return Array.from(items).slice(0, 5).map(item => ({
+            title: item.querySelector('title')?.textContent || 'Untitled',
+            link: item.querySelector('link')?.textContent || '#',
+            pubDate: item.querySelector('pubDate')?.textContent || ''
+        }));
+    } catch (e) {
+        console.warn('[News] AllOrigins fallback also failed:', e.message);
+        return [];
+    }
+}
+
+async function fetchNews() {
+    try {
+        const items = await fetchFeedWithFallback(PHILSTAR_RSS);
+
+        if (!items || items.length === 0) {
+            throw new Error('No news items returned from any source');
         }
+
+        const headlines = items.slice(0, 3);
+        newsList.innerHTML = headlines.map(item => {
+            const title = item.title || 'Untitled';
+            const ago = timeAgo(item.pubDate);
+            const link = item.link || '#';
+
+            return `
+                <a class="news-item" href="${link}" target="_blank" rel="noopener">
+                    <div class="news-headline">${title}</div>
+                    <div class="news-meta">
+                        <span class="news-source">Philstar</span>
+                        ${ago ? '<span>·</span><span>' + ago + '</span>' : ''}
+                    </div>
+                </a>`;
+        }).join('');
+
+        newsStatusEl.innerHTML = '<span class="status-dot green"></span>LIVE';
+
+    } catch (error) {
+        console.error('News fetch failed:', error);
+        newsStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
+        newsList.innerHTML = `<div class="news-loading">News headlines temporarily unavailable.</div>`;
+    }
+}
+
+       // =========================================
+// PAR STRIP — Typhoon / LPA / ITCZ
+// =========================================
+function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo) {
+    const parITCZ = document.getElementById('parITCZ');
+    const parStripLabel = document.getElementById('parStripLabel');
+    const parStripTitle = document.getElementById('parStripTitle');
+    const parStripSub = document.getElementById('parStripSub');
+    const parStripIcon = document.getElementById('parStripIcon');
+
+    // Reset base classes
+    parStrip.classList.remove('clear', 'itcz-active');
+    parStripLabel.textContent = 'PAR Weather Alert';
+
+    const hasAnyAlert = hasTyphoon || hasLPA || hasITCZ;
+
+    // 1. CLEAR STATE
+    if (!hasAnyAlert) {
+        parStrip.classList.add('clear');
+        parStripTitle.textContent = 'No Typhoon, LPA, or ITCZ in PAR';
+        parStripTitle.style.color = 'var(--success)';
+        parStripSub.textContent = 'Philippine Area of Responsibility is clear. Continue monitoring PAGASA bulletins.';
+        
+        parStripIcon.innerHTML = `
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/>
+                <path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`;
+        
+        parITCZ.style.display = 'none';
+        return; // Stop here
+    }
+
+    // 2. TYPHOON STATE
+    if (hasTyphoon) {
+        parStripTitle.textContent = typhoonInfo.name;
+        parStripTitle.style.color = 'var(--danger)';
+        parStripSub.innerHTML = `${typhoonInfo.location} · <strong>${typhoonInfo.wind} km/h</strong> max winds`;
+        
+        parStripIcon.innerHTML = `
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
+                <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
+                <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+            </svg>`;
+    } 
+    // 3. LPA STATE
+    else if (hasLPA) {
+        parStripTitle.textContent = 'Low Pressure Area';
+        parStripTitle.style.color = 'var(--warning)';
+        parStripSub.innerHTML = lpaInfo || 'LPA being monitored inside PAR.';
+        
+        parStripIcon.innerHTML = `
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="14" fill="#4da3ff" opacity="0.15"/>
+                <path d="M32 18 A14 14 0 0 1 46 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                <path d="M32 46 A14 14 0 0 1 18 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+                <circle cx="32" cy="32" r="5" fill="#4da3ff"/>
+            </svg>`;
+    } 
+    // 4. ITCZ ONLY STATE
+    else {
+        parStrip.classList.add('itcz-active');
+        parStripTitle.textContent = 'Intertropical Convergence Zone (ITCZ)';
+        parStripTitle.style.color = '#4da3ff';
+        parStripSub.textContent = 'ITCZ affecting the PAR.';
+        
+        parStripIcon.innerHTML = `
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 24c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                <path d="M10 34c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+                <path d="M10 44c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.4"/>
+            </svg>`;
+    }
+
+    // 5. ITCZ ADDITIONAL ROW (shows if ITCZ is active alongside Typhoon/LPA)
+    if (hasITCZ && itczInfo) {
+        // If we are in ITCZ-ONLY mode (case 4), we already set the main text. 
+        // We only show the extra row if there is a typhoon or LPA taking the main spot.
+        if (hasTyphoon || hasLPA) {
+            parITCZ.style.display = 'block';
+            parITCZSub.innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
+        } else {
+            // If it's ITCZ-only, we want the details in the main sub-text.
+            parStripSub.innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
+            parITCZ.style.display = 'none'; // Hide the duplicate inner box
+        }
+    } else {
+        parITCZ.style.display = 'none';
+    }
+}
 
         // WEATHER
         async function fetchWeather() {
@@ -2606,6 +2706,46 @@
                 computeAndRenderSchoolStatus();
             }
         }
+
+// =========================================
+// REMOTE PAR STATUS FETCH (from GitHub)
+// =========================================
+async function fetchPARRemote() {
+    try {
+        const response = await fetch(PAR_REMOTE_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const data = await response.json();
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid PAR JSON');
+        }
+
+        const hasTyphoon = data.hasTyphoon === true;
+        const hasLPA = data.hasLPA === true;
+        const hasITCZ = data.hasITCZ === true;
+
+        const typhoonInfo = hasTyphoon && data.typhoonInfo ? {
+            name: (data.typhoonInfo.name || 'Unnamed Typhoon').toString().slice(0, 60),
+            wind: Number(data.typhoonInfo.wind) || 0,
+            location: (data.typhoonInfo.location || 'Location unknown').toString().slice(0, 120)
+        } : null;
+
+        const lpaInfo = hasLPA ? (data.lpaInfo || 'LPA being monitored inside PAR.').toString().slice(0, 200) : null;
+
+        const itczInfo = hasITCZ && data.itczInfo ? {
+            place: (data.itczInfo.place || '').toString().slice(0, 120),
+            speed: (data.itczInfo.speed || '').toString().slice(0, 60),
+            direction: (data.itczInfo.direction || '').toString().slice(0, 60)
+        } : null;
+
+        updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo);
+        console.log('[PAR] Updated from GitHub at', new Date().toLocaleTimeString());
+
+    } catch (error) {
+        console.warn('[PAR] Remote fetch failed, showing clear state:', error.message);
+        updatePARStrip(false, null, false, null, false, null);
+    }
+}
 
         // LONG-PRESS HANDLER
         function attachLongPress(el, callback) {
@@ -2862,11 +3002,9 @@
             fetchNews();
             setAirQuality(42, 18);
 
-            updatePARStrip(
-                true,
-                { name: 'Super Typhoon Choi-wan', wind: 195, location: 'Outside PAR · 2,605 km East of Extreme Northern Luzon' },
-                false, null
-            );
+            // PAR status — show clear state immediately, then fetch from GitHub
+            updatePARStrip(false, null, false, null, false, null);
+            fetchPARRemote();
 
             setInterval(updateClock, 1000);
             setInterval(fetchWeather, WEATHER_REFRESH_MS);
@@ -2874,6 +3012,7 @@
             setInterval(fetchNews, NEWS_REFRESH_MS);
             setInterval(fetchAnnouncementRemote, ANNOUNCEMENT_REFRESH_MS);
             setInterval(fetchStatusRemote, STATUS_REFRESH_MS);
+            setInterval(fetchPARRemote, PAR_REFRESH_MS);
         }
 
         if (document.readyState === 'loading') {
