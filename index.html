@@ -186,14 +186,40 @@
         }
 
         /* MAIN GRID */
+                /* MAIN GRID (Default: 32" / 64" TV Landscape) */
         main {
             flex: 1 1 auto;
             padding: 1vh 1vw;
             display: grid;
-            grid-template-columns: 2.2fr 1.15fr 1.15fr;
-            grid-template-rows: 1fr 1fr;
+            /* Weather is large on the left. Video, Status, and Announcement on the right. */
+            grid-template-columns: 2.2fr 1.1fr 1.1fr; 
+            grid-template-rows: 1.2fr 1fr; 
             gap: 0.8vw;
             min-height: 0;
+        }
+
+        /* Weather spans both rows on the far left */
+        .weather {
+            grid-column: 1;
+            grid-row: 1 / span 2;
+        }
+
+        /* Video spans the top right (columns 2 and 3) */
+        #videoWidget {
+            grid-column: 2 / span 2;
+            grid-row: 1;
+        }
+
+        /* School Status sits bottom middle */
+        .school-status {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        /* Announcement sits bottom right */
+        .announcement-card {
+            grid-column: 3;
+            grid-row: 2;
         }
 
         .widget {
@@ -248,6 +274,7 @@
             vertical-align: middle;
         }
 
+        
         .status-dot.green { background: var(--success); box-shadow: 0 0 5px rgba(54,194,117,0.5); }
         .status-dot.yellow { background: var(--warning); box-shadow: 0 0 5px rgba(242,184,75,0.5); }
         .status-dot.red { background: var(--danger); box-shadow: 0 0 5px rgba(239,98,98,0.5); }
@@ -463,6 +490,7 @@
             background: linear-gradient(135deg, #2a1a1a, #3a2222);
             border: 1px solid rgba(239, 98, 98, 0.3);
             flex-shrink: 0;
+             min-height: 62px;
         }
         
 
@@ -1462,33 +1490,21 @@
         </div>
     </div>
 </div>
+        <!-- EARTHQUAKE STRIP (Moved inside Weather Card) -->
+        <div class="par-strip" id="eqStrip" style="margin-top: 0.8vh; border-color: rgba(242,184,75,0.3); background: linear-gradient(135deg, #2a2310, #332a12);">
+            <div class="par-strip-icon" id="eqIcon">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 32h8l4-12 8 24 6-16 4 4h18" stroke="#f2b84b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="par-strip-text">
+                <div class="par-strip-label" id="eqStatusLabel">EARTHQUAKE MONITOR</div>
+                <div class="par-strip-title" id="eqTitle" style="color: #f2b84b;">Fetching seismic data...</div>
+                <div class="par-strip-sub" id="eqSub"></div>
+            </div>
         </div>
-
         <div class="source-note">
             Weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · AQ: PAGASA/DENR · PAR: PAGASA
-        </div>
-    </section>
-
-    <!-- EARTHQUAKE -->
-    <section class="widget" aria-label="Earthquake monitor" id="earthquakeWidget">
-        <div class="widget-header">
-            <div class="widget-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12h4l2-6 4 12 2-6h8"/>
-                </svg>
-                Earthquake Monitor
-            </div>
-            <div id="eqStatus">
-                <span class="status-dot green"></span>NORMAL
-            </div>
-        </div>
-
-        <div id="eqContainer">
-            <div class="eq-loading">Fetching latest seismic data…</div>
-        </div>
-
-        <div class="source-note">
-            Source: <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener">USGS Earthquake API</a>
         </div>
     </section>
 
@@ -2242,7 +2258,7 @@
         }
 
         // EARTHQUAKE
-        async function fetchEarthquakes() {
+                async function fetchEarthquakes() {
             const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
                 + '?format=geojson'
                 + '&starttime=' + getStartTime()
@@ -2252,7 +2268,7 @@
                 + '&minlongitude=' + PH_BOUNDS.minlongitude
                 + '&maxlongitude=' + PH_BOUNDS.maxlongitude
                 + '&orderby=time'
-                + '&limit=3';
+                + '&limit=2';
 
             try {
                 const response = await fetch(url, { cache: 'no-store' });
@@ -2263,70 +2279,86 @@
 
                 computeAndRenderSchoolStatus();
 
+                const eqStrip = document.getElementById('eqStrip');
+                const eqStatusLabel = document.getElementById('eqStatusLabel');
+                const eqTitle = document.getElementById('eqTitle');
+                const eqSub = document.getElementById('eqSub');
+                const eqIcon = document.getElementById('eqIcon');
+
                 if (features.length === 0) {
-                    eqStatusEl.innerHTML = '<span class="status-dot green"></span>NORMAL';
-                    eqContainer.innerHTML = `
-                        <div style="color:var(--success);font-weight:700;font-size:clamp(1.1rem,1.4vw,1.5rem);">No Recent Events</div>
-                        <div style="color:var(--muted);font-size:clamp(0.8rem,0.95vw,1.1rem);margin-top:0.5vh;">
-                            No earthquakes M2.5+ recorded in the Philippine region in the last 7 days.
-                        </div>`;
+                    eqStrip.style.background = 'linear-gradient(135deg, #10271d, #102f22)';
+                    eqStrip.style.borderColor = 'rgba(54,194,117,0.3)';
+                    eqStatusLabel.innerHTML = 'EARTHQUAKE MONITOR';
+                    eqStatusLabel.style.color = 'var(--success)';
+                    eqTitle.textContent = 'No Recent Events';
+                    eqTitle.style.color = 'var(--success)';
+                    eqSub.textContent = 'No earthquakes M2.5+ recorded recently.';
+                    eqIcon.innerHTML = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/><path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
                     return;
                 }
 
                 const maxMag = Math.max(...features.map(f => f.properties.mag || 0));
-                let statusText = 'NORMAL';
-                let statusClass = 'green';
-                if (maxMag >= 5.0) { statusText = 'SIGNIFICANT'; statusClass = 'red'; }
-                else if (maxMag >= 4.0) { statusText = 'MODERATE'; statusClass = 'yellow'; }
+                
+                let color = '#36c275'; // Green
+                let bg = 'linear-gradient(135deg, #10271d, #102f22)';
+                let border = 'rgba(54,194,117,0.3)';
+                
+                if (maxMag >= 5.0) {
+                    color = '#ef6262'; // Red
+                    bg = 'linear-gradient(135deg, #2a1a1a, #3a2222)';
+                    border = 'rgba(239,98,98,0.3)';
+                } else if (maxMag >= 4.0) {
+                    color = '#f2b84b'; // Yellow
+                    bg = 'linear-gradient(135deg, #2a2310, #332a12)';
+                    border = 'rgba(242,184,75,0.3)';
+                }
 
-                eqStatusEl.innerHTML = `<span class="status-dot ${statusClass}"></span>${statusText}`;
+                eqStrip.style.background = bg;
+                eqStrip.style.borderColor = border;
 
-                eqContainer.innerHTML = '<div class="eq-list">' + features.map(f => {
+                const formatEq = (f) => {
                     const props = f.properties;
-                    const coords = f.geometry.coordinates;
-                    const mag = props.mag;
-                    const place = props.place || 'Philippines region';
-                    const depth = coords[2];
                     const time = new Date(props.time);
+                    const timeStr = time.toLocaleString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    const place = props.place || 'PH region';
+                    const depth = f.geometry.coordinates[2].toFixed(0);
+                    return { mag: props.mag.toFixed(1), place, timeStr, depth };
+                };
 
-                    let magColor = 'var(--success)';
-                    if (mag >= 5.0) magColor = 'var(--danger)';
-                    else if (mag >= 4.0) magColor = 'var(--warning)';
+                const primary = formatEq(features[0]);
 
-                    return `
-                        <div class="eq-row">
-                            <div class="eq-row-top">
-                                <span class="eq-mag" style="color:${magColor};">M ${mag.toFixed(1)}</span>
-                                <span class="eq-time">${time.toLocaleString('en-PH', {
-                                    month: 'short', day: 'numeric',
-                                    hour: '2-digit', minute: '2-digit', hour12: true
-                                })}</span>
-                            </div>
-                            <div class="eq-place">${place}</div>
-                            <div class="eq-meta">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#9eabc0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 2v20M2 12h20"/>
-                                </svg>
-                                Depth: ${depth.toFixed(1)} km
-                            </div>
-                        </div>`;
-                }).join('') + '</div>';
+                eqStatusLabel.innerHTML = 'EARTHQUAKE MONITOR';
+                eqStatusLabel.style.color = color;
+                
+                eqTitle.textContent = `M${primary.mag} - ${primary.place}`;
+                eqTitle.style.color = color;
+                
+                let subText = `${primary.timeStr} · ${primary.depth}km deep`;
+                if (features.length > 1) {
+                    const secondary = formatEq(features[1]);
+                    subText += ` | Earlier: M${secondary.mag} - ${secondary.place}`;
+                }
+                eqSub.textContent = subText;
+
+                eqIcon.innerHTML = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 32h8l4-12 8 24 6-16 4 4h18" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`;
 
             } catch (error) {
                 console.error('Earthquake fetch failed:', error);
-                eqStatusEl.innerHTML = '<span class="status-dot yellow"></span>OFFLINE';
-                eqContainer.innerHTML = `
-                    <div style="color:var(--muted);font-weight:700;font-size:clamp(1.1rem,1.4vw,1.5rem);">Data Unavailable</div>
-                    <div style="color:var(--muted);font-size:clamp(0.8rem,0.95vw,1.1rem);margin-top:0.5vh;">
-                        Unable to fetch seismic data. Will retry automatically.
-                    </div>`;
+                const eqStatusLabel = document.getElementById('eqStatusLabel');
+                const eqTitle = document.getElementById('eqTitle');
+                eqStatusLabel.style.color = 'var(--muted)';
+                eqTitle.style.color = 'var(--muted)';
+                eqTitle.textContent = 'Seismic Data Unavailable';
+                document.getElementById('eqSub').textContent = 'Retrying automatically...';
             }
-        }
-
-        function getStartTime() {
+            
+            function getStartTime() {
             const d = new Date();
-            d.setDate(d.getDate() - 7);
+            d.setDate(d.getDate() - 7); // Look back 7 days
             return d.toISOString().split('T')[0];
+        }
         }
 
        // =========================================
