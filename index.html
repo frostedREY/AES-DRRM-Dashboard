@@ -632,31 +632,6 @@
             color: var(--danger);
         }
 
-                /* Fullscreen Video Takeover */
-        #videoWidget.fullscreen-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 99999; /* Above everything else */
-            background: #000;
-            border-radius: 0;
-            border: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* Hide the header and padding when in fullscreen */
-        #videoWidget.fullscreen-mode .widget-header {
-            display: none;
-        }
-
-        #videoWidget.fullscreen-mode > div {
-            margin-top: 0 !important;
-            border-radius: 0 !important;
-        }
-
         .news-item:first-child { padding-top: 0.2vh; }
         .news-item:last-child { border-bottom: none; padding-bottom: 0; }
         .news-item:hover { background: rgba(77,163,255,0.04); }
@@ -2399,7 +2374,7 @@ async function fetchFeedWithFallback(rssUrl) {
 
 
 // =========================================
-// DRRM VIDEOS (Autoplay Playlist + Kiosk Takeover)
+// DRRM VIDEOS (Autoplay Playlist - YouTube API)
 // =========================================
 const DRRM_PLAYLIST = [
     { id: "t36YzCnmjEU", title: "PHIVOLCS: What to do during an Earthquake" },
@@ -2410,102 +2385,63 @@ const DRRM_PLAYLIST = [
 
 let currentVideoIndex = 0;
 let ytPlayer = null;
-let isFullscreenMode = false;
 
-// Initialize when API loads
+// This function is automatically called by the YouTube API script once it loads
 window.onYouTubeIframeAPIReady = function() {
+    // We only initialize the player if the container exists on the page
     if (document.getElementById('ytPlayerContainer')) {
         createPlayer(0);
-        startKioskTimer(); // Start the 10-minute timer
     }
 };
 
 function createPlayer(index) {
     currentVideoIndex = index;
     const video = DRRM_PLAYLIST[index];
-
+    
+    // If a player already exists, just load the new video into it
     if (ytPlayer) {
         ytPlayer.loadVideoById(video.id);
         return;
     }
 
+    // Otherwise, create a new player
     ytPlayer = new YT.Player('ytPlayerContainer', {
         videoId: video.id,
         playerVars: {
             'autoplay': 1,
-            'mute': 1,
+            'mute': 1,         // Required for browsers to allow autoplay
             'controls': 1,
             'rel': 0,
             'playsinline': 1,
-            'origin': window.location.origin
+            'origin': window.location.origin // Crucial for API to work
         },
         events: {
-            'onStateChange': onPlayerStateChange,
-            'onReady': onPlayerReady
+            'onStateChange': onPlayerStateChange
         }
     });
 }
 
-function onPlayerReady(event) {
-    // If the timer triggers while the player is paused, we can force it to play
-    if (isFullscreenMode) {
-        event.target.playVideo();
-    }
-}
-
 function onPlayerStateChange(event) {
-    // If a video ends (state 0)
+    // YT.PlayerState.ENDED is 0
     if (event.data === 0) {
+        // Move to the next video
+        let nextIndex = currentVideoIndex + 1;
         
-        // If we were in fullscreen mode, exit it and return to dashboard
-        if (isFullscreenMode) {
-            exitFullscreenMode();
-            // Pause the video and reset it back to the hidden widget
-            ytPlayer.pauseVideo(); 
-            return;
+        // Loop back to the start if we reach the end of the playlist
+        if (nextIndex >= DRRM_PLAYLIST.length) {
+            nextIndex = 0;
         }
-
-        // Otherwise, just loop to the next video in the background
-        let nextIndex = (currentVideoIndex + 1) % DRRM_PLAYLIST.length;
+        
         createPlayer(nextIndex);
     }
 }
 
-// =========================================
-// FULLSCREEN KIOSK LOGIC
-// =========================================
-function triggerFullscreenVideo() {
-    if (isFullscreenMode) return; // Prevent double-triggering
-
-    isFullscreenMode = true;
-    const videoWidget = document.getElementById('videoWidget');
-    
-    // Add CSS class to make it take over the screen
-    videoWidget.classList.add('fullscreen-mode');
-    
-    // Ensure player is playing and unmuted (optional: keep muted=1 if TVs don't have speakers)
-    if (ytPlayer && ytPlayer.playVideo) {
-        ytPlayer.playVideo();
-        // ytPlayer.unMute(); // Uncomment this if you want sound during the takeover
+async function fetchNews() {
+    // If the API hasn't loaded yet, it will trigger window.onYouTubeIframeAPIReady
+    // If the API is already loaded (e.g., page cached), we manually trigger it
+    if (window.YT && window.YT.Player) {
+        createPlayer(0);
     }
-}
-
-function exitFullscreenMode() {
-    isFullscreenMode = false;
-    const videoWidget = document.getElementById('videoWidget');
-    
-    // Remove CSS class to return it to its normal grid position
-    videoWidget.classList.remove('fullscreen-mode');
-}
-
-function startKioskTimer() {
-    // 10 minutes = 600,000 milliseconds
-    setInterval(() => {
-        // Only trigger if we aren't already in fullscreen
-        if (!isFullscreenMode) {
-            triggerFullscreenVideo();
-        }
-    }, 5 * 60 * 1000);
 }
 
 // =========================================
