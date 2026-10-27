@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>School DRRM Dashboard · Antipolo ES</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         :root {
             --bg: #0b1220;
@@ -1492,6 +1493,7 @@
     </section>
 
     <!-- DRRM VIDEOS (Autoplay) -->
+       <!-- DRRM VIDEOS (Autoplay) -->
     <section class="widget" aria-label="DRRM training videos" id="videoWidget">
         <div class="widget-header">
             <div class="widget-title">
@@ -1506,18 +1508,11 @@
             </div>
         </div>
         
-        <!-- Video Container -->
-        <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:0.5vh; margin-top: 0.5vh;">
-            <div id="ytPlayerContainer" style="width:100%; flex:1; background:#000; border-radius:var(--radius-sm); overflow:hidden; position:relative;">
-                <!-- The iframe will be injected here -->
+        <!-- Video Container (Fills the rest of the widget) -->
+        <div style="flex:1; min-height:0; margin-top: 0.5vh; border-radius:var(--radius-sm); overflow:hidden;">
+            <!-- The YouTube API will inject the iframe directly into this div -->
+            <div id="ytPlayerContainer" style="width:100%; height:100%; background:#000; position:relative;">
             </div>
-            <div id="videoTitle" style="font-size:clamp(0.75rem, 0.9vw, 1.1rem); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
-                Loading video...
-            </div>
-        </div>
-
-        <div class="source-note">
-            Educational content provided by PHIVOLCS, PAGASA, and Red Cross.
         </div>
     </section>
 
@@ -2377,8 +2372,9 @@ async function fetchFeedWithFallback(rssUrl) {
     }
 }
 
+
 // =========================================
-// DRRM VIDEOS (Autoplay Playlist)
+// DRRM VIDEOS (Autoplay Playlist - YouTube API)
 // =========================================
 const DRRM_PLAYLIST = [
     { id: "t36YzCnmjEU", title: "PHIVOLCS: What to do during an Earthquake" },
@@ -2388,71 +2384,65 @@ const DRRM_PLAYLIST = [
 ];
 
 let currentVideoIndex = 0;
+let ytPlayer = null;
 
-function loadVideo(index) {
-    // Loop back to the start if we reach the end of the playlist
-    if (index >= DRRM_PLAYLIST.length) {
-        index = 0; 
+// This function is automatically called by the YouTube API script once it loads
+window.onYouTubeIframeAPIReady = function() {
+    // We only initialize the player if the container exists on the page
+    if (document.getElementById('ytPlayerContainer')) {
+        createPlayer(0);
     }
-    
+};
+
+function createPlayer(index) {
     currentVideoIndex = index;
     const video = DRRM_PLAYLIST[index];
     
-    // Update the title text under the video
-    document.getElementById('videoTitle').textContent = video.title;
+    // If a player already exists, just load the new video into it
+    if (ytPlayer) {
+        ytPlayer.loadVideoById(video.id);
+        return;
+    }
 
-    // Create the YouTube Embed URL
-    // autoplay=1 (starts automatically), mute=1 (required by browsers for autoplay), 
-    // loop=1 & playlist=ID (loops this specific video if it's the only one left)
-    const origin = window.location.origin; // Needed for API to send events
-    const embedUrl = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${origin}`;
-
-    // Create the iframe
-    const container = document.getElementById('ytPlayerContainer');
-    container.innerHTML = `
-        <iframe 
-            id="ytIframe"
-            width="100%" 
-            height="100%" 
-            src="${embedUrl}" 
-            title="${video.title}"
-            frameborder="0" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            referrerpolicy="strict-origin-when-cross-origin"
-            allowfullscreen>
-        </iframe>
-    `;
-
-    // Listen for the "Ended" event to trigger the next video
-    setupPlayerListener(index);
+    // Otherwise, create a new player
+    ytPlayer = new YT.Player('ytPlayerContainer', {
+        videoId: video.id,
+        playerVars: {
+            'autoplay': 1,
+            'mute': 1,         // Required for browsers to allow autoplay
+            'controls': 1,
+            'rel': 0,
+            'playsinline': 1,
+            'origin': window.location.origin // Crucial for API to work
+        },
+        events: {
+            'onStateChange': onPlayerStateChange
+        }
+    });
 }
 
-function setupPlayerListener(index) {
-    // We have to send a message to the iframe to listen to its events
-    const iframe = document.getElementById('ytIframe');
-    
-    const eventListener = function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            // 0 means the video ended
-            if (data.event === "onStateChange" && data.info === 0) {
-                window.removeEventListener('message', eventListener);
-                // Load the next video in the list
-                loadVideo(index + 1); 
-            }
-        } catch (e) {
-            // Ignore parsing errors from other iframe messages
+function onPlayerStateChange(event) {
+    // YT.PlayerState.ENDED is 0
+    if (event.data === 0) {
+        // Move to the next video
+        let nextIndex = currentVideoIndex + 1;
+        
+        // Loop back to the start if we reach the end of the playlist
+        if (nextIndex >= DRRM_PLAYLIST.length) {
+            nextIndex = 0;
         }
-    };
-    
-    window.addEventListener('message', eventListener);
+        
+        createPlayer(nextIndex);
+    }
 }
 
 async function fetchNews() {
-    // Videos are hardcoded, so we just initialize the first one
-    loadVideo(0);
+    // If the API hasn't loaded yet, it will trigger window.onYouTubeIframeAPIReady
+    // If the API is already loaded (e.g., page cached), we manually trigger it
+    if (window.YT && window.YT.Player) {
+        createPlayer(0);
+    }
 }
-
 
 // =========================================
 // PAR STRIP — Typhoon / LPA / ITCZ
