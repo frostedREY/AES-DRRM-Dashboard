@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>School DRRM Dashboard · Antipolo ES</title>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         :root {
             --bg: #0b1220;
@@ -37,16 +36,6 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-        }
-
-        /* Hide the header and padding when in fullscreen */
-        #videoWidget.fullscreen-mode .widget-header {
-            display: none;
-        }
-
-        #videoWidget.fullscreen-mode > div {
-            margin-top: 0 !important;
-            border-radius: 0 !important;
         }
 
         /* HEADER */
@@ -1503,7 +1492,6 @@
     </section>
 
     <!-- DRRM VIDEOS (Autoplay) -->
-       <!-- DRRM VIDEOS (Autoplay) -->
     <section class="widget" aria-label="DRRM training videos" id="videoWidget">
         <div class="widget-header">
             <div class="widget-title">
@@ -1518,11 +1506,18 @@
             </div>
         </div>
         
-        <!-- Video Container (Fills the rest of the widget) -->
-        <div style="flex:1; min-height:0; margin-top: 0.5vh; border-radius:var(--radius-sm); overflow:hidden;">
-            <!-- The YouTube API will inject the iframe directly into this div -->
-            <div id="ytPlayerContainer" style="width:100%; height:100%; background:#000; position:relative;">
+        <!-- Video Container -->
+        <div style="flex:1; min-height:0; display:flex; flex-direction:column; gap:0.5vh; margin-top: 0.5vh;">
+            <div id="ytPlayerContainer" style="width:100%; flex:1; background:#000; border-radius:var(--radius-sm); overflow:hidden; position:relative;">
+                <!-- The iframe will be injected here -->
             </div>
+            <div id="videoTitle" style="font-size:clamp(0.75rem, 0.9vw, 1.1rem); font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center;">
+                Loading video...
+            </div>
+        </div>
+
+        <div class="source-note">
+            Educational content provided by PHIVOLCS, PAGASA, and Red Cross.
         </div>
     </section>
 
@@ -1735,10 +1730,7 @@
         </div>
     </div>
 </div>
-<!-- FULLSCREEN VIDEO OVERLAY -->
-<div id="fullscreenVideoOverlay" style="display:none; position:fixed; inset:0; background:#000; z-index:99999; flex-direction:column;">
-    <div id="ytFullscreenContainer" style="width:100%; height:100%;"></div>
-</div>
+
 <script>
     (function() {
         'use strict';
@@ -2386,7 +2378,7 @@ async function fetchFeedWithFallback(rssUrl) {
 }
 
 // =========================================
-// DRRM VIDEOS (Autoplay Playlist + Kiosk Takeover)
+// DRRM VIDEOS (Autoplay Playlist)
 // =========================================
 const DRRM_PLAYLIST = [
     { id: "t36YzCnmjEU", title: "PHIVOLCS: What to do during an Earthquake" },
@@ -2396,103 +2388,71 @@ const DRRM_PLAYLIST = [
 ];
 
 let currentVideoIndex = 0;
-let bgPlayer = null;
-let fsPlayer = null;
-let isFullscreenMode = false;
 
-window.onYouTubeIframeAPIReady = function() {
-    if (document.getElementById('ytPlayerContainer')) {
-        createBgPlayer(0);
-        startKioskTimer();
+function loadVideo(index) {
+    // Loop back to the start if we reach the end of the playlist
+    if (index >= DRRM_PLAYLIST.length) {
+        index = 0; 
     }
-};
-
-// --- Background Player (Silent, in dashboard) ---
-function createBgPlayer(index) {
+    
     currentVideoIndex = index;
     const video = DRRM_PLAYLIST[index];
-
-    if (bgPlayer) {
-        bgPlayer.loadVideoById(video.id);
-        return;
-    }
-
-    bgPlayer = new YT.Player('ytPlayerContainer', {
-        videoId: video.id,
-        playerVars: {
-            'autoplay': 1, 'mute': 1, 'controls': 1, 'rel': 0, 'playsinline': 1, 'origin': window.location.origin
-        },
-        events: {
-            'onStateChange': onBgStateChange
-        }
-    });
-}
-
-function onBgStateChange(event) {
-    if (event.data === 0) { // Video ended
-        let nextIndex = (currentVideoIndex + 1) % DRRM_PLAYLIST.length;
-        createBgPlayer(nextIndex);
-    }
-}
-
-// --- Fullscreen Overlay Logic ---
-function triggerFullscreenVideo() {
-    if (isFullscreenMode) return;
-    isFullscreenMode = true;
-
-    const overlay = document.getElementById('fullscreenVideoOverlay');
-    overlay.style.display = 'flex';
-
-    // Pick a random video to force attention
-    const randomIndex = Math.floor(Math.random() * DRRM_PLAYLIST.length);
-    const video = DRRM_PLAYLIST[randomIndex];
-
-    // Create a fresh player in the overlay
-    if (fsPlayer) {
-        fsPlayer.destroy();
-    }
-
-    fsPlayer = new YT.Player('ytFullscreenContainer', {
-        videoId: video.id,
-        playerVars: {
-            'autoplay': 1, 
-            'mute': 0, // UNMUTE for the fullscreen takeover (requires autoplay permissions)
-            'controls': 1, 
-            'rel': 0, 
-            'playsinline': 1, 
-            'origin': window.location.origin
-        },
-        events: {
-            'onStateChange': onFsStateChange
-        }
-    });
-}
-
-function onFsStateChange(event) {
-    if (event.data === 0) { // Fullscreen video ended
-        exitFullscreenMode();
-    }
-}
-
-function exitFullscreenMode() {
-    isFullscreenMode = false;
-    const overlay = document.getElementById('fullscreenVideoOverlay');
-    overlay.style.display = 'none';
     
-    if (fsPlayer) {
-        fsPlayer.destroy();
-        fsPlayer = null;
-    }
+    // Update the title text under the video
+    document.getElementById('videoTitle').textContent = video.title;
+
+    // Create the YouTube Embed URL
+    // autoplay=1 (starts automatically), mute=1 (required by browsers for autoplay), 
+    // loop=1 & playlist=ID (loops this specific video if it's the only one left)
+    const origin = window.location.origin; // Needed for API to send events
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${origin}`;
+
+    // Create the iframe
+    const container = document.getElementById('ytPlayerContainer');
+    container.innerHTML = `
+        <iframe 
+            id="ytIframe"
+            width="100%" 
+            height="100%" 
+            src="${embedUrl}" 
+            title="${video.title}"
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+        </iframe>
+    `;
+
+    // Listen for the "Ended" event to trigger the next video
+    setupPlayerListener(index);
 }
 
-function startKioskTimer() {
-    // Trigger every 10 minutes
-    setInterval(() => {
-        if (!isFullscreenMode) {
-            triggerFullscreenVideo();
+function setupPlayerListener(index) {
+    // We have to send a message to the iframe to listen to its events
+    const iframe = document.getElementById('ytIframe');
+    
+    const eventListener = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            // 0 means the video ended
+            if (data.event === "onStateChange" && data.info === 0) {
+                window.removeEventListener('message', eventListener);
+                // Load the next video in the list
+                loadVideo(index + 1); 
+            }
+        } catch (e) {
+            // Ignore parsing errors from other iframe messages
         }
-    }, 3 * 60 * 1000);
+    };
+    
+    window.addEventListener('message', eventListener);
 }
+
+async function fetchNews() {
+    // Videos are hardcoded, so we just initialize the first one
+    loadVideo(0);
+}
+
 
 // =========================================
 // PAR STRIP — Typhoon / LPA / ITCZ
