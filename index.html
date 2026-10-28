@@ -1183,9 +1183,23 @@
         .animate-flash { animation: flash 4s ease-in-out infinite; }
 
         /* RESPONSIVE */
+                /* =========================
+           ADAPTIVE BREAKPOINTS
+        ========================= */
+
+        /* LAPTOPS & SMALLER TVs (Up to 1200px wide) */
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1.8fr 1.2fr 1.2fr;
+            }
+            .school-name { font-size: 1.6rem; }
+            .weather-temp { font-size: 3.8rem; }
+        }
+
+        /* TABLETS & MOBILE (Up to 900px wide) */
         @media (max-width: 900px) {
-            html, body { overflow: auto; height: auto; }
-            body { min-height: 100vh; }
+            html, body { overflow-y: auto; height: auto; }
+            body { min-height: 100vh; display: block; } /* Changed from flex to block */
 
             header {
                 flex-direction: column;
@@ -1199,45 +1213,70 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: baseline;
-                flex-wrap: wrap;
-                gap: 4px 16px;
+                margin-top: 10px;
             }
 
             main {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto;
+                display: flex;
+                flex-direction: column;
                 height: auto;
                 padding: 14px;
-                gap: 12px;
+                gap: 14px;
             }
 
-            .weather { grid-row: auto; }
-            .widget { padding: 16px; }
+            /* THIS IS THE FIX: Reset all grid positions so they stack vertically */
+            .weather, #videoWidget, .school-status, .announcement-card {
+                grid-column: auto !important;
+                grid-row: auto !important;
+                width: 100%;
+            }
 
-            .weather-top { grid-template-columns: auto 1fr; }
-            .air-quality-badge { grid-column: 1 / -1; justify-self: start; margin-top: 8px; }
-            .weather-details { grid-template-columns: repeat(2, 1fr); }
+            /* Give the video a fixed height so it doesn't disappear or stretch too much */
+            #videoWidget {
+                height: 350px; 
+            }
 
-            .source-note { margin-top: 12px; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+            .weather-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .air-quality-badge {
+                grid-column: 1 / -1;
+                justify-self: start;
+                margin-top: 8px;
             }
         }
 
-        :focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
+        /* MOBILE PHONES (Up to 600px wide) */
+        @media (max-width: 600px) {
+            .widget {
+                padding: 14px;
+            }
+            
+            .weather-top {
+                grid-template-columns: auto 1fr;
+            }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--panel); }
-        ::-webkit-scrollbar-thumb { background: #2a3a55; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3a4a65; }
+            .weather-temp {
+                font-size: 3rem;
+            }
+
+            .weather-details {
+                grid-template-columns: 1fr;
+            }
+
+            #videoWidget {
+                height: 250px; /* Smaller video for phones */
+            }
+
+            .school-status-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .emergency-contacts {
+                margin-top: 15px;
+            }
+        }
     </style>
 </head>
 
