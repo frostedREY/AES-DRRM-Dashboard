@@ -2492,34 +2492,26 @@ window.onYouTubeIframeAPIReady = function() {
 function createPlayer(index) {
     currentVideoIndex = index;
     const video = DRRM_PLAYLIST[index];
-
-    // 1. Destroy the old player to free up memory and prevent API freezing
-    if (bgPlayer) {
-        try {
-            bgPlayer.destroy();
-        } catch (e) {
-            console.warn("Player destroy skipped:", e);
-        }
-        bgPlayer = null;
+    
+    // If a player already exists, just load the new video into it
+    if (ytPlayer) {
+        ytPlayer.loadVideoById(video.id);
+        return;
     }
 
-    // 2. Recreate the container div (destroy() removes it from the DOM)
-    const container = document.getElementById('ytPlayerContainer');
-    container.innerHTML = '<div id="ytInnerPlayer"></div>';
-
-    // 3. Create a brand new player instance
-    bgPlayer = new YT.Player('ytInnerPlayer', {
+    // Otherwise, create a new player
+    ytPlayer = new YT.Player('ytPlayerContainer', {
         videoId: video.id,
         playerVars: {
-            'autoplay': 1, 
-            'mute': 1, 
-            'controls': 1, 
-            'rel': 0, 
-            'playsinline': 1, 
-            'origin': window.location.origin
+            'autoplay': 1,
+            'mute': 1,         // Required for browsers to allow autoplay
+            'controls': 1,
+            'rel': 0,
+            'playsinline': 1,
+            'origin': window.location.origin // Crucial for API to work
         },
         events: {
-            'onStateChange': onBgStateChange
+            'onStateChange': onPlayerStateChange
         }
     });
 }
