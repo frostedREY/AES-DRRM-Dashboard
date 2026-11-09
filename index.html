@@ -186,37 +186,31 @@
         }
 
         /* MAIN GRID */
-                /* MAIN GRID (Default: 32" / 64" TV Landscape) */
         main {
             flex: 1 1 auto;
             padding: 1vh 1vw;
             display: grid;
-            /* Weather is large on the left. Video, Status, and Announcement on the right. */
             grid-template-columns: 2.2fr 1.1fr 1.1fr; 
             grid-template-rows: 1.2fr 1fr; 
             gap: 0.8vw;
             min-height: 0;
         }
 
-        /* Weather spans both rows on the far left */
         .weather {
             grid-column: 1;
             grid-row: 1 / span 2;
         }
 
-        /* Video spans the top right (columns 2 and 3) */
         #videoWidget {
             grid-column: 2 / span 2;
             grid-row: 1;
         }
 
-        /* School Status sits bottom middle */
         .school-status {
             grid-column: 2;
             grid-row: 2;
         }
 
-        /* Announcement sits bottom right */
         .announcement-card {
             grid-column: 3;
             grid-row: 2;
@@ -274,7 +268,6 @@
             vertical-align: middle;
         }
 
-        
         .status-dot.green { background: var(--success); box-shadow: 0 0 5px rgba(54,194,117,0.5); }
         .status-dot.yellow { background: var(--warning); box-shadow: 0 0 5px rgba(242,184,75,0.5); }
         .status-dot.red { background: var(--danger); box-shadow: 0 0 5px rgba(239,98,98,0.5); }
@@ -492,9 +485,7 @@
             flex-shrink: 0;
              min-height: 62px;
         }
-        
 
-        /* ADD THIS: Blue theme when only ITCZ is active */
         .par-strip.itcz-active {
          background: linear-gradient(135deg, #10223a, #152a45);
          border-color: rgba(77, 163, 255, 0.3);
@@ -650,7 +641,6 @@
             color: inherit;
             transition: background 0.15s ease;
         }
-        /* DRRM Video specific tweaks */
         .news-item:hover .news-headline {
             color: var(--accent);
         }
@@ -1183,11 +1173,7 @@
         .animate-flash { animation: flash 4s ease-in-out infinite; }
 
         /* RESPONSIVE */
-                /* =========================
-           ADAPTIVE BREAKPOINTS
-        ========================= */
 
-        /* LAPTOPS & SMALLER TVs (Up to 1200px wide) */
         @media (max-width: 1200px) {
             main {
                 grid-template-columns: 1.8fr 1.2fr 1.2fr;
@@ -1196,10 +1182,9 @@
             .weather-temp { font-size: 3.8rem; }
         }
 
-        /* TABLETS & MOBILE (Up to 900px wide) */
         @media (max-width: 900px) {
             html, body { overflow-y: auto; height: auto; }
-            body { min-height: 100vh; display: block; } /* Changed from flex to block */
+            body { min-height: 100vh; display: block; }
 
             header {
                 flex-direction: column;
@@ -1224,14 +1209,12 @@
                 gap: 14px;
             }
 
-            /* THIS IS THE FIX: Reset all grid positions so they stack vertically */
             .weather, #videoWidget, .school-status, .announcement-card {
                 grid-column: auto !important;
                 grid-row: auto !important;
                 width: 100%;
             }
 
-            /* Give the video a fixed height so it doesn't disappear or stretch too much */
             #videoWidget {
                 height: 350px; 
             }
@@ -1246,7 +1229,6 @@
             }
         }
 
-        /* MOBILE PHONES (Up to 600px wide) */
         @media (max-width: 600px) {
             .widget {
                 padding: 14px;
@@ -1265,7 +1247,7 @@
             }
 
             #videoWidget {
-                height: 250px; /* Smaller video for phones */
+                height: 250px;
             }
 
             .school-status-content {
@@ -1276,6 +1258,93 @@
             .emergency-contacts {
                 margin-top: 15px;
             }
+        }
+
+        /* =========================
+           FULL-SCREEN IMAGE TAKEOVER
+        ========================= */
+        .image-takeover {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            cursor: pointer;
+        }
+
+        .image-takeover.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .image-takeover.fade-out {
+            opacity: 0;
+        }
+
+        .image-takeover img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .image-takeover-close {
+            position: absolute;
+            top: 2vh;
+            right: 2vw;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: #fff;
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.2s;
+            z-index: 2;
+        }
+
+        .image-takeover-close:hover {
+            background: rgba(239,98,98,0.7);
+            transform: scale(1.08);
+        }
+
+        .image-takeover-caption {
+            position: absolute;
+            bottom: 3vh;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.75);
+            font-size: clamp(0.75rem, 1vw, 1rem);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+            background: rgba(0,0,0,0.45);
+            padding: 6px 16px;
+            border-radius: 20px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .image-takeover-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 2;
+            transition: width 0.2s linear;
         }
     </style>
 </head>
@@ -1353,11 +1422,11 @@
             </div>
 
             <div class="air-quality-badge" id="aqiBadge">
-                <div class="aqi-number" id="aqiValue">42</div>
+                <div class="aqi-number" id="aqiValue">—</div>
                 <div class="aqi-info">
                     <div class="aqi-label">AQI · PM2.5</div>
-                    <div class="aqi-status-text" id="aqiStatus">Good</div>
-                    <div class="aqi-detail-text" id="aqiDetail">18 µg/m³</div>
+                    <div class="aqi-status-text" id="aqiStatus">Loading…</div>
+                    <div class="aqi-detail-text" id="aqiDetail">— µg/m³</div>
                 </div>
             </div>
         </div>
@@ -1518,18 +1587,15 @@
     <div class="par-strip-text">
         <div class="par-strip-label" id="parStripLabel">PAR Weather Alert</div>
         
-        <!-- Main status (Typhoon, LPA, or Clear) -->
         <div class="par-strip-title" id="parStripTitle"></div>
         <div class="par-strip-sub" id="parStripSub"></div>
 
-        <!-- ITCZ row (hidden by default) -->
         <div id="parITCZ" style="display:none; margin-top:0.6vh; padding-top:0.6vh; border-top: 1px solid rgba(255,255,255,0.15);">
             <div class="par-strip-title" style="color:#4da3ff; font-size: 0.9em;">Intertropical Convergence Zone (ITCZ)</div>
             <div class="par-strip-sub" id="parITCZSub"></div>
         </div>
     </div>
 </div>
-        <!-- EARTHQUAKE STRIP (Moved inside Weather Card) -->
         <div class="par-strip" id="eqStrip" style="margin-top: 0.8vh; border-color: rgba(242,184,75,0.3); background: linear-gradient(135deg, #2a2310, #332a12);">
             <div class="par-strip-icon" id="eqIcon">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1543,12 +1609,11 @@
             </div>
         </div>
         <div class="source-note">
-            Weather: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · AQ: PAGASA/DENR · PAR: PAGASA
+            Weather & AQ: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · PAR: PAGASA
         </div>
     </section>
 
     <!-- DRRM VIDEOS (Autoplay) -->
-       <!-- DRRM VIDEOS (Autoplay) -->
     <section class="widget" aria-label="DRRM training videos" id="videoWidget">
         <div class="widget-header">
             <div class="widget-title">
@@ -1563,9 +1628,7 @@
             </div>
         </div>
         
-        <!-- Video Container (Fills the rest of the widget) -->
         <div style="flex:1; min-height:0; margin-top: 0.5vh; border-radius:var(--radius-sm); overflow:hidden;">
-            <!-- The YouTube API will inject the iframe directly into this div -->
             <div id="ytPlayerContainer" style="width:100%; height:100%; background:#000; position:relative;">
             </div>
         </div>
@@ -1771,6 +1834,25 @@
             <input type="date" id="fieldDate">
         </div>
 
+        <div class="admin-section-title event">Image Takeover</div>
+
+        <div class="admin-field">
+            <label for="fieldImageFilenames">Image Filenames (one per line, from /images/ in repo)</label>
+            <textarea id="fieldImageFilenames" placeholder="welcome.jpg&#10;drill-notice.jpg&#10;..." rows="4"></textarea>
+        </div>
+
+        <div class="admin-field">
+            <label>Preview / Actions</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="admin-btn" id="imageTakeoverPreview" type="button">👁 Preview Now</button>
+                <button class="admin-btn" id="imageTakeoverSaveList" type="button">💾 Save Filenames</button>
+                <button class="admin-btn danger" id="imageTakeoverResetList" type="button">↺ Reset List</button>
+            </div>
+            <div class="detail-hint" style="margin-top:8px;">
+                Current rotation: <strong id="imageTakeoverCount">—</strong> images. Takeover shows every 10 minutes for 30 seconds.
+            </div>
+        </div>
+
         <div class="admin-actions">
             <button class="admin-btn primary" id="adminSave">💾 Save</button>
             <button class="admin-btn" id="adminExport">⬇️ Export JSON</button>
@@ -1779,6 +1861,14 @@
             <input type="file" id="adminImportFile" accept=".json,application/json" style="display:none;">
         </div>
     </div>
+</div>
+
+<!-- FULL-SCREEN IMAGE TAKEOVER -->
+<div class="image-takeover" id="imageTakeover" role="dialog" aria-label="Full-screen image display">
+    <button class="image-takeover-close" id="imageTakeoverClose" title="Close (Esc)">&times;</button>
+    <img id="imageTakeoverImg" src="" alt="DRRM visual notice">
+    <div class="image-takeover-caption" id="imageTakeoverCaption"></div>
+    <div class="image-takeover-progress" id="imageTakeoverProgress"></div>
 </div>
 
 <script>
@@ -1791,7 +1881,7 @@
         const ANNOUNCEMENT_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/announcement.json';
         const STATUS_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/school_status.json';
         const PAR_REMOTE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/par_status.json';
-        const PAR_REFRESH_MS = 5 * 60 * 1000; // 1 hour
+        const PAR_REFRESH_MS = 5 * 60 * 1000; // 5 minutes (GitHub CDN cache ~5 min)
 
         // How often to re-fetch the remote JSON.
         // GitHub's CDN caches raw files ~5 min, so values below 5 min won't help.
@@ -1805,8 +1895,9 @@
         const LONGITUDE = 124.694503;
         const TIMEZONE = 'Asia/Manila';
         const WEATHER_REFRESH_MS = 15 * 60 * 1000;
+        const AQI_REFRESH_MS = 30 * 60 * 1000;
         const EQ_REFRESH_MS = 5 * 60 * 1000;
-        const NEWS_REFRESH_MS = 6 * 60 * 60 * 1000; // 6 hours (videos don't change often)
+        const VIDEO_REFRESH_MS = 6 * 60 * 60 * 1000; // 6 hours (videos don't change often)
         const ANNOUNCEMENT_STORAGE_KEY = 'school_event_config';
         const STATUS_STORAGE_KEY = 'school_status_config';
 
@@ -1821,9 +1912,22 @@
             minlongitude: 116.0, maxlongitude: 127.5
         };
 
-       // YouTube Playlist RSS for DRRM/PHIVOLCS/Red Cross (Example: PHIVOLCS official)
-       // You can change this URL to any public YouTube Playlist RSS feed.
-        const VIDEO_RSS_URL = 'https://www.youtube.com/feeds/https://youtube.com/playlist?list=PL720Kw_OojlICHYC_SUOivlzbgoT4nXGa&si=1IjBU9wi21l7b9G7.xml?playlist_id=PL8a8mC1U0bI5fJvQ5Yg7w2j5V5Y5Y5Y5Y'; 
+        // =========================================
+        // IMAGE TAKEOVER CONFIG
+        // =========================================
+        const IMAGE_BASE_URL = 'https://raw.githubusercontent.com/frostedREY/AES-DRRM-Dashboard/refs/heads/main/images/';
+        const IMAGE_TAKEOVER_INTERVAL_MS = 10 * 60 * 1000;   // every 10 minutes
+        const IMAGE_TAKEOVER_FIRST_DELAY_MS = 60 * 1000;     // first takeover after 1 minute
+        const IMAGE_TAKEOVER_DURATION_MS = 30 * 1000;        // display for 30 seconds
+        const IMAGE_TAKEOVER_STORAGE_KEY = 'image_takeover_list';
+
+        const DEFAULT_IMAGE_FILENAMES = [
+            'evac-map.png',
+            'fire-drill.jpg',
+            'earthquake-drill.jpg',
+            'dengue-advisory.jpg',
+            'typhoon-safety.jpg',
+        ];
 
         const DEFAULT_ANNOUNCEMENT = {
             today: {
@@ -1901,17 +2005,6 @@
             if (cloud < 70) return 'Partly cloudy.';
             if (cloud < 90) return 'Mostly cloudy.';
             return 'Overcast — very cloudy.';
-        }
-
-        function timeAgo(dateStr) {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return '';
-            const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-            if (diff < 60) return 'Just now';
-            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-            return Math.floor(diff / 86400) + 'd ago';
         }
 
         function buildWeatherSummary(current, daily) {
@@ -2094,14 +2187,7 @@
         const aqiStatusEl = document.getElementById('aqiStatus');
         const aqiDetailEl = document.getElementById('aqiDetail');
 
-        const eqContainer = document.getElementById('eqContainer');
-        const eqStatusEl = document.getElementById('eqStatus');
-
-        const videoList = document.getElementById('videoList'); // (or newsList)
-        const videoStatusEl = document.getElementById('videoStatus'); // (or newsStatus)
-
         const parStrip = document.getElementById('parStrip');
-        const parStripIcon = document.getElementById('parStripIcon');
         const parStripTitle = document.getElementById('parStripTitle');
         const parStripSub = document.getElementById('parStripSub');
 
@@ -2146,7 +2232,7 @@
         const fieldDate = document.getElementById('fieldDate');
 
         let latestEqFeatures = null;
-        let latestAQI = 42;
+        let latestAQI = null;
 
         // CLOCK
         function updateClock() {
@@ -2196,6 +2282,36 @@
             computeAndRenderSchoolStatus();
         }
 
+        async function fetchAirQuality() {
+            const url = 'https://air-quality-api.open-meteo.com/v1/air-quality'
+                + '?latitude=' + LATITUDE
+                + '&longitude=' + LONGITUDE
+                + '&current=us_aqi,pm2_5'
+                + '&timezone=' + encodeURIComponent(TIMEZONE);
+
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                const current = data.current;
+                if (current && current.us_aqi != null && current.pm2_5 != null) {
+                    setAirQuality(Math.round(current.us_aqi), Math.round(current.pm2_5));
+                } else {
+                    throw new Error('Missing AQI fields in response');
+                }
+            } catch (error) {
+                console.warn('[AirQuality] Fetch failed:', error.message);
+                latestAQI = null;
+                aqiValueEl.textContent = '—';
+                aqiValueEl.style.color = 'var(--muted)';
+                aqiStatusEl.textContent = 'Unavailable';
+                aqiStatusEl.style.color = 'var(--muted)';
+                aqiDetailEl.textContent = '— µg/m³';
+                if (aqiBadgeEl) aqiBadgeEl.style.borderLeftColor = 'var(--muted)';
+                computeAndRenderSchoolStatus();
+            }
+        }
+
         // SCHOOL STATUS
         function loadStatusConfig() {
             try {
@@ -2240,7 +2356,7 @@
                 }
             }
 
-            if (latestAQI >= AQI_MONITORING_THRESHOLD) {
+            if (latestAQI != null && latestAQI >= AQI_MONITORING_THRESHOLD) {
                 return {
                     state: 'MONITORING',
                     message: `Air quality is ${latestAQI} (unhealthy for sensitive groups). Limit outdoor activities.`,
@@ -2297,7 +2413,7 @@
         }
 
         // EARTHQUAKE
-                async function fetchEarthquakes() {
+        async function fetchEarthquakes() {
             const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
                 + '?format=geojson'
                 + '&starttime=' + getStartTime()
@@ -2338,16 +2454,16 @@
 
                 const maxMag = Math.max(...features.map(f => f.properties.mag || 0));
                 
-                let color = '#36c275'; // Green
+                let color = '#36c275';
                 let bg = 'linear-gradient(135deg, #10271d, #102f22)';
                 let border = 'rgba(54,194,117,0.3)';
                 
                 if (maxMag >= 5.0) {
-                    color = '#ef6262'; // Red
+                    color = '#ef6262';
                     bg = 'linear-gradient(135deg, #2a1a1a, #3a2222)';
                     border = 'rgba(239,98,98,0.3)';
                 } else if (maxMag >= 4.0) {
-                    color = '#f2b84b'; // Yellow
+                    color = '#f2b84b';
                     bg = 'linear-gradient(135deg, #2a2310, #332a12)';
                     border = 'rgba(242,184,75,0.3)';
                 }
@@ -2395,241 +2511,169 @@
             
             function getStartTime() {
             const d = new Date();
-            d.setDate(d.getDate() - 7); // Look back 7 days
+            d.setDate(d.getDate() - 7);
             return d.toISOString().split('T')[0];
         }
         }
 
-       // =========================================
-// NEWS HEADLINES — with Fallback Proxy
-// =========================================
+        // =========================================
+        // DRRM VIDEOS (Autoplay Playlist - YouTube API)
+        // =========================================
+        const DRRM_PLAYLIST = [
+            { id: "t36YzCnmjEU", title: "Remember: Drop, Cover, and Hold" },
+            { id: "MKILThtPxQs", title: "When the Earth Shakes" },
+            { id: "tWhTdfHQWqs", title: "When the Fire Starts" },
+            { id: "Gk2qrBOYtSY", title: "Grilling Fire Safety" },
+            { id: "IfuSO6cMPYM", title: "Holiday Fire Safety" },
+            { id: "3xv8bdKhBno", title: "Fire Safety For Adults" },
+            { id: "C9KSFRq4rXA", title: "Fire Safety - Have Two Ways Out" },
+            { id: "Htgqb0pwrlQ", title: "Prepping A Go Bag" },
+            { id: "0OidC4VZGqM", title: "Life Saving Skills: Prevent Fires, Fix Electrical Problems" },
+            { id: "XxOMTiJ9k", title: "Life Saving Skills: Are you Prepared for Power Outage?" },
+            { id: "heKL7zIPGy8", title: "Life Saving Skills: Natural Gas" },
+            { id: "QlA6HhQ3Ifw", title: "Life Saving Skills: Save Money and Be Prepared for Emergency" },
+            { id: "z3gDvX-exE0", title: "Flood Water is Filthy" },
+            { id: "cvN-y-2hGq4", title: "Flood Water is Dangerous for Kids" },
+            { id: "H9H_jkuJ3wo", title: "Long? or Strong? Get gone!" },
+            { id: "DUaxt8OlT3o", title: "CPR in Action: A 3d Look Inside the Body" },
+            { id: "GymXjJJ7Ugo", title: "Children First Aid: Choking Child" },
+            { id: "iajIQ5C1XyA", title: "Child First Aid: Helping a Child With A Burn" },
+            { id: "vSnRdmR6xcE", title: "Children First Aid: Seizure (Epilepsy)" },
+            { id: "1qje-XlNowI", title: "Helping Someone Who is Having a Heart Attack" },
+            { id: "HeDwK99SU2Q", title: "Heart Attack Signs and Symptoms" },
+            { id: "WwbewZmF96g", title: "Heart Attack vs. Cardiac Arrest" },
+            { id: "YGxp0dK5JEg", title: "Child First Aid: Sprain or Strain" }
+        ];
 
-// Helper: try rss2json, then fall back to AllOrigins
-async function fetchFeedWithFallback(rssUrl) {
-    // Attempt 1: rss2json (returns clean JSON directly)
-    try {
-        const rss2jsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
-        const response = await fetch(rss2jsonUrl, { cache: 'no-store' });
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'ok' && data.items && data.items.length > 0) {
-                return data.items;
+        let currentVideoIndex = 0;
+        let ytPlayer = null;
+
+        window.onYouTubeIframeAPIReady = function() {
+            if (document.getElementById('ytPlayerContainer')) {
+                createPlayer(0);
+            }
+        };
+
+        function createPlayer(index) {
+            currentVideoIndex = index;
+            const video = DRRM_PLAYLIST[index];
+            
+            if (ytPlayer) {
+                ytPlayer.loadVideoById(video.id);
+                return;
+            }
+
+            ytPlayer = new YT.Player('ytPlayerContainer', {
+                videoId: video.id,
+                playerVars: {
+                    'autoplay': 1,
+                    'mute': 1,
+                    'controls': 1,
+                    'rel': 0,
+                    'playsinline': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === 0) {
+                let nextIndex = currentVideoIndex + 1;
+                if (nextIndex >= DRRM_PLAYLIST.length) {
+                    nextIndex = 0;
+                }
+                createPlayer(nextIndex);
             }
         }
-    } catch (e) {
-        console.warn('[News] rss2json failed, trying fallback:', e.message);
-    }
 
-    // Attempt 2: AllOrigins (fetches raw XML, we parse it ourselves)
-    try {
-        const alloriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rssUrl);
-        const response = await fetch(alloriginsUrl, { cache: 'no-store' });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-
-        const xmlText = await response.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-        const items = xmlDoc.querySelectorAll('item');
-
-        // Convert the XML items into the same shape rss2json returns
-        return Array.from(items).slice(0, 5).map(item => ({
-            title: item.querySelector('title')?.textContent || 'Untitled',
-            link: item.querySelector('link')?.textContent || '#',
-            pubDate: item.querySelector('pubDate')?.textContent || ''
-        }));
-    } catch (e) {
-        console.warn('[News] AllOrigins fallback also failed:', e.message);
-        return [];
-    }
-}
-
-
-// =========================================
-// DRRM VIDEOS (Autoplay Playlist - YouTube API)
-// =========================================
-const DRRM_PLAYLIST = [
-    { id: "t36YzCnmjEU", title: "Remember: Drop, Cover, and Hold" },
-    { id: "MKILThtPxQs", title: "When the Earth Shakes" },
-    { id: "tWhTdfHQWqs", title: "When the Fire Starts" },
-    { id: "Gk2qrBOYtSY", title: "Grilling Fire Safety" },
-    { id: "IfuSO6cMPYM", title: "Holiday Fire Safety" },
-    { id: "3xv8bdKhBno", title: "Fire Safety For Adults" },
-    { id: "C9KSFRq4rXA", title: "Fire Safety - Have Two Ways Out" },
-    { id: "Htgqb0pwrlQ", title: "Prepping A Go Bag" },
-    { id: "0OidC4VZGqM", title: "Life Saving Skills: Prevent Fires, Fix Electrical Problems" },
-    { id: "XxOMTiJ9k", title: "Life Saving Skills: Are you Prepared for Power Outage?" },
-    { id: "heKL7zIPGy8", title: "Life Saving Skills: Natural Gas" },
-    { id: "QlA6HhQ3Ifw", title: "Life Saving Skills: Save Money and Be Prepared for Emergency" },
-    { id: "z3gDvX-exE0", title: "Flood Water is Filthy" },
-    { id: "cvN-y-2hGq4", title: "Flood Water is Dangerous for Kids" },
-    { id: "H9H_jkuJ3wo", title: "Long? or Strong? Get gone!" },
-    { id: "DUaxt8OlT3o", title: "CPR in Action: A 3d Look Inside the Body" },
-    { id: "GymXjJJ7Ugo", title: "Children First Aid: Choking Child" },
-    { id: "iajIQ5C1XyA", title: "Child First Aid: Helping a Child With A Burn" },
-    { id: "vSnRdmR6xcE", title: "Children First Aid: Seizure (Epilepsy)" },
-    { id: "3xv8bdKhBno", title: "Fire Safety For Adults" },
-    { id: "C9KSFRq4rXA", title: "Fire Safety - Have Two Ways Out" },
-    { id: "Htgqb0pwrlQ", title: "Prepping A Go Bag" },
-    { id: "0OidC4VZGqM", title: "Life Saving Skills: Prevent Fires, Fix Electrical Problems" },
-    { id: "XxOMTiJ9k", title: "Life Saving Skills: Are you Prepared for Power Outage?" },
-    { id: "1qje-XlNowI", title: "Helping Someone Who is Having a Heart Attack" },
-    { id: "HeDwK99SU2Q", title: "Heart Attack Signs and Symptoms" },
-    { id: "WwbewZmF96g", title: "Heart Attack vs. Cardiac Arrest" },
-    { id: "YGxp0dK5JEg", title: "Child First Aid: Sprain or Strain" }
-];
-
-let currentVideoIndex = 0;
-let ytPlayer = null;
-
-// This function is automatically called by the YouTube API script once it loads
-window.onYouTubeIframeAPIReady = function() {
-    // We only initialize the player if the container exists on the page
-    if (document.getElementById('ytPlayerContainer')) {
-        createPlayer(0);
-    }
-};
-
-function createPlayer(index) {
-    currentVideoIndex = index;
-    const video = DRRM_PLAYLIST[index];
-    
-    // If a player already exists, just load the new video into it
-    if (ytPlayer) {
-        ytPlayer.loadVideoById(video.id);
-        return;
-    }
-
-    // Otherwise, create a new player
-    ytPlayer = new YT.Player('ytPlayerContainer', {
-        videoId: video.id,
-        playerVars: {
-            'autoplay': 1,
-            'mute': 1,         // Required for browsers to allow autoplay
-            'controls': 1,
-            'rel': 0,
-            'playsinline': 1,
-            'origin': window.location.origin // Crucial for API to work
-        },
-        events: {
-            'onStateChange': onPlayerStateChange
+        async function initVideoPlayer() {
+            if (window.YT && window.YT.Player) {
+                createPlayer(0);
+            }
         }
-    });
-}
 
-function onPlayerStateChange(event) {
-    // YT.PlayerState.ENDED is 0
-    if (event.data === 0) {
-        // Move to the next video
-        let nextIndex = currentVideoIndex + 1;
-        
-        // Loop back to the start if we reach the end of the playlist
-        if (nextIndex >= DRRM_PLAYLIST.length) {
-            nextIndex = 0;
+        // =========================================
+        // PAR STRIP — Typhoon / LPA / ITCZ
+        // =========================================
+        function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo) {
+            const parITCZ = document.getElementById('parITCZ');
+            const parStripLabel = document.getElementById('parStripLabel');
+
+            parStrip.classList.remove('clear', 'itcz-active');
+            parStripLabel.textContent = 'PAR Weather Alert';
+
+            const hasAnyAlert = hasTyphoon || hasLPA || hasITCZ;
+
+            if (!hasAnyAlert) {
+                parStrip.classList.add('clear');
+                parStripTitle.textContent = 'No Typhoon, LPA, or ITCZ in PAR';
+                parStripTitle.style.color = 'var(--success)';
+                parStripSub.textContent = 'Philippine Area of Responsibility is clear. Continue monitoring PAGASA bulletins.';
+                
+                document.getElementById('parStripIcon').innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/>
+                        <path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                
+                parITCZ.style.display = 'none';
+                return;
+            }
+
+            if (hasTyphoon) {
+                parStripTitle.textContent = typhoonInfo.name;
+                parStripTitle.style.color = 'var(--danger)';
+                parStripSub.innerHTML = `${typhoonInfo.location} · <strong>${typhoonInfo.wind} km/h</strong> max winds`;
+                
+                document.getElementById('parStripIcon').innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
+                        <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+                    </svg>`;
+            } 
+            else if (hasLPA) {
+                parStripTitle.textContent = 'Low Pressure Area';
+                parStripTitle.style.color = 'var(--warning)';
+                parStripSub.innerHTML = lpaInfo || 'LPA being monitored inside PAR.';
+                
+                document.getElementById('parStripIcon').innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="14" fill="#4da3ff" opacity="0.15"/>
+                        <path d="M32 18 A14 14 0 0 1 46 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M32 46 A14 14 0 0 1 18 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+                        <circle cx="32" cy="32" r="5" fill="#4da3ff"/>
+                    </svg>`;
+            } 
+            else {
+                parStrip.classList.add('itcz-active');
+                parStripTitle.textContent = 'Intertropical Convergence Zone (ITCZ)';
+                parStripTitle.style.color = '#4da3ff';
+                parStripSub.textContent = 'ITCZ affecting the PAR.';
+                
+                document.getElementById('parStripIcon').innerHTML = `
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 24c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M10 34c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
+                        <path d="M10 44c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.4"/>
+                    </svg>`;
+            }
+
+            if (hasITCZ && itczInfo) {
+                if (hasTyphoon || hasLPA) {
+                    parITCZ.style.display = 'block';
+                    document.getElementById('parITCZSub').innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
+                } else {
+                    parStripSub.innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
+                    parITCZ.style.display = 'none';
+                }
+            } else {
+                parITCZ.style.display = 'none';
+            }
         }
-        
-        createPlayer(nextIndex);
-    }
-}
-
-async function fetchNews() {
-    // If the API hasn't loaded yet, it will trigger window.onYouTubeIframeAPIReady
-    // If the API is already loaded (e.g., page cached), we manually trigger it
-    if (window.YT && window.YT.Player) {
-        createPlayer(0);
-    }
-}
-
-// =========================================
-// PAR STRIP — Typhoon / LPA / ITCZ
-// =========================================
-function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo) {
-    const parITCZ = document.getElementById('parITCZ');
-    const parStripLabel = document.getElementById('parStripLabel');
-    const parStripTitle = document.getElementById('parStripTitle');
-    const parStripSub = document.getElementById('parStripSub');
-    const parStripIcon = document.getElementById('parStripIcon');
-
-    // Reset base classes
-    parStrip.classList.remove('clear', 'itcz-active');
-    parStripLabel.textContent = 'PAR Weather Alert';
-
-    const hasAnyAlert = hasTyphoon || hasLPA || hasITCZ;
-
-    // 1. CLEAR STATE
-    if (!hasAnyAlert) {
-        parStrip.classList.add('clear');
-        parStripTitle.textContent = 'No Typhoon, LPA, or ITCZ in PAR';
-        parStripTitle.style.color = 'var(--success)';
-        parStripSub.textContent = 'Philippine Area of Responsibility is clear. Continue monitoring PAGASA bulletins.';
-        
-        parStripIcon.innerHTML = `
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="24" stroke="#36c275" stroke-width="2.5" fill="none"/>
-                <path d="M20 33l8 8 16-18" stroke="#36c275" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>`;
-        
-        parITCZ.style.display = 'none';
-        return; // Stop here
-    }
-
-    // 2. TYPHOON STATE
-    if (hasTyphoon) {
-        parStripTitle.textContent = typhoonInfo.name;
-        parStripTitle.style.color = 'var(--danger)';
-        parStripSub.innerHTML = `${typhoonInfo.location} · <strong>${typhoonInfo.wind} km/h</strong> max winds`;
-        
-        parStripIcon.innerHTML = `
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="8" fill="#ef6262" opacity="0.9"/>
-                <path d="M32 8 A24 24 0 0 1 56 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none"/>
-                <path d="M32 56 A24 24 0 0 1 8 32" stroke="#ef6262" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
-            </svg>`;
-    } 
-    // 3. LPA STATE
-    else if (hasLPA) {
-        parStripTitle.textContent = 'Low Pressure Area';
-        parStripTitle.style.color = 'var(--warning)';
-        parStripSub.innerHTML = lpaInfo || 'LPA being monitored inside PAR.';
-        
-        parStripIcon.innerHTML = `
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="14" fill="#4da3ff" opacity="0.15"/>
-                <path d="M32 18 A14 14 0 0 1 46 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
-                <path d="M32 46 A14 14 0 0 1 18 32" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
-                <circle cx="32" cy="32" r="5" fill="#4da3ff"/>
-            </svg>`;
-    } 
-    // 4. ITCZ ONLY STATE
-    else {
-        parStrip.classList.add('itcz-active');
-        parStripTitle.textContent = 'Intertropical Convergence Zone (ITCZ)';
-        parStripTitle.style.color = '#4da3ff';
-        parStripSub.textContent = 'ITCZ affecting the PAR.';
-        
-        parStripIcon.innerHTML = `
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 24c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none"/>
-                <path d="M10 34c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
-                <path d="M10 44c6-4 12-4 18 0s12 4 18 0" stroke="#4da3ff" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.4"/>
-            </svg>`;
-    }
-
-    // 5. ITCZ ADDITIONAL ROW (shows if ITCZ is active alongside Typhoon/LPA)
-    if (hasITCZ && itczInfo) {
-        // If we are in ITCZ-ONLY mode (case 4), we already set the main text. 
-        // We only show the extra row if there is a typhoon or LPA taking the main spot.
-        if (hasTyphoon || hasLPA) {
-            parITCZ.style.display = 'block';
-            parITCZSub.innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
-        } else {
-            // If it's ITCZ-only, we want the details in the main sub-text.
-            parStripSub.innerHTML = `<strong>${itczInfo.place || 'Affected areas'}</strong> · ${itczInfo.speed || 'Light to Moderate'} · ${itczInfo.direction || 'Variable'}`;
-            parITCZ.style.display = 'none'; // Hide the duplicate inner box
-        }
-    } else {
-        parITCZ.style.display = 'none';
-    }
-}
 
         // WEATHER
         async function fetchWeather() {
@@ -2782,7 +2826,6 @@ function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczI
             }
         }
 
-        // REMOTE ANNOUNCEMENT FETCH
         async function fetchAnnouncementRemote() {
             try {
                 const response = await fetch(ANNOUNCEMENT_REMOTE_URL, { cache: 'no-store' });
@@ -2821,7 +2864,6 @@ function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczI
             }
         }
 
-        // REMOTE STATUS FETCH
         async function fetchStatusRemote() {
             try {
                 const response = await fetch(STATUS_REMOTE_URL, { cache: 'no-store' });
@@ -2854,45 +2896,227 @@ function updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczI
             }
         }
 
-// =========================================
-// REMOTE PAR STATUS FETCH (from GitHub)
-// =========================================
-async function fetchPARRemote() {
-    try {
-        const response = await fetch(PAR_REMOTE_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+        async function fetchPARRemote() {
+            try {
+                const response = await fetch(PAR_REMOTE_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
 
-        const data = await response.json();
-        if (!data || typeof data !== 'object') {
-            throw new Error('Invalid PAR JSON');
+                const data = await response.json();
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid PAR JSON');
+                }
+
+                const hasTyphoon = data.hasTyphoon === true;
+                const hasLPA = data.hasLPA === true;
+                const hasITCZ = data.hasITCZ === true;
+
+                const typhoonInfo = hasTyphoon && data.typhoonInfo ? {
+                    name: (data.typhoonInfo.name || 'Unnamed Typhoon').toString().slice(0, 60),
+                    wind: Number(data.typhoonInfo.wind) || 0,
+                    location: (data.typhoonInfo.location || 'Location unknown').toString().slice(0, 120)
+                } : null;
+
+                const lpaInfo = hasLPA ? (data.lpaInfo || 'LPA being monitored inside PAR.').toString().slice(0, 200) : null;
+
+                const itczInfo = hasITCZ && data.itczInfo ? {
+                    place: (data.itczInfo.place || '').toString().slice(0, 120),
+                    speed: (data.itczInfo.speed || '').toString().slice(0, 60),
+                    direction: (data.itczInfo.direction || '').toString().slice(0, 60)
+                } : null;
+
+                updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo);
+                console.log('[PAR] Updated from GitHub at', new Date().toLocaleTimeString());
+
+            } catch (error) {
+                console.warn('[PAR] Remote fetch failed, showing clear state:', error.message);
+                updatePARStrip(false, null, false, null, false, null);
+            }
         }
 
-        const hasTyphoon = data.hasTyphoon === true;
-        const hasLPA = data.hasLPA === true;
-        const hasITCZ = data.hasITCZ === true;
+        // =========================================
+        // FULL-SCREEN IMAGE TAKEOVER
+        // =========================================
+        let imageTakeoverTimer = null;
+        let imageTakeoverHideTimer = null;
+        let imageTakeoverIndex = 0;
+        let imageTakeoverActive = false;
 
-        const typhoonInfo = hasTyphoon && data.typhoonInfo ? {
-            name: (data.typhoonInfo.name || 'Unnamed Typhoon').toString().slice(0, 60),
-            wind: Number(data.typhoonInfo.wind) || 0,
-            location: (data.typhoonInfo.location || 'Location unknown').toString().slice(0, 120)
-        } : null;
+        const imageTakeoverEl = document.getElementById('imageTakeover');
+        const imageTakeoverImg = document.getElementById('imageTakeoverImg');
+        const imageTakeoverCaption = document.getElementById('imageTakeoverCaption');
+        const imageTakeoverProgress = document.getElementById('imageTakeoverProgress');
+        const imageTakeoverClose = document.getElementById('imageTakeoverClose');
 
-        const lpaInfo = hasLPA ? (data.lpaInfo || 'LPA being monitored inside PAR.').toString().slice(0, 200) : null;
+        function loadImageFilenames() {
+            try {
+                const raw = localStorage.getItem(IMAGE_TAKEOVER_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return parsed.map(s => String(s).trim()).filter(Boolean);
+                    }
+                }
+            } catch {}
+            return [...DEFAULT_IMAGE_FILENAMES];
+        }
 
-        const itczInfo = hasITCZ && data.itczInfo ? {
-            place: (data.itczInfo.place || '').toString().slice(0, 120),
-            speed: (data.itczInfo.speed || '').toString().slice(0, 60),
-            direction: (data.itczInfo.direction || '').toString().slice(0, 60)
-        } : null;
+        function saveImageFilenames(list) {
+            try {
+                localStorage.setItem(IMAGE_TAKEOVER_STORAGE_KEY, JSON.stringify(list));
+            } catch (e) { console.warn('Could not save image list:', e); }
+        }
 
-        updatePARStrip(hasTyphoon, typhoonInfo, hasLPA, lpaInfo, hasITCZ, itczInfo);
-        console.log('[PAR] Updated from GitHub at', new Date().toLocaleTimeString());
+        function showImageTakeover(filename) {
+            return new Promise((resolve) => {
+                if (!filename) { resolve(false); return; }
 
-    } catch (error) {
-        console.warn('[PAR] Remote fetch failed, showing clear state:', error.message);
-        updatePARStrip(false, null, false, null, false, null);
-    }
-}
+                const url = IMAGE_BASE_URL + encodeURIComponent(filename);
+
+                const probe = new Image();
+                probe.onload = () => {
+                    imageTakeoverImg.src = url;
+                    imageTakeoverCaption.textContent = filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+
+                    imageTakeoverProgress.style.transition = 'none';
+                    imageTakeoverProgress.style.width = '0%';
+                    void imageTakeoverProgress.offsetWidth;
+                    imageTakeoverProgress.style.transition = 'width 0.2s linear';
+
+                    imageTakeoverEl.classList.add('show');
+                    requestAnimationFrame(() => {
+                        imageTakeoverEl.style.opacity = '1';
+                    });
+
+                    imageTakeoverProgress.style.transition = `width ${IMAGE_TAKEOVER_DURATION_MS}ms linear`;
+                    requestAnimationFrame(() => {
+                        imageTakeoverProgress.style.width = '100%';
+                    });
+
+                    imageTakeoverActive = true;
+
+                    imageTakeoverHideTimer = setTimeout(() => {
+                        hideImageTakeover();
+                        resolve(true);
+                    }, IMAGE_TAKEOVER_DURATION_MS);
+                };
+
+                probe.onerror = () => {
+                    console.warn('[ImageTakeover] Failed to load:', url);
+                    resolve(false);
+                };
+
+                probe.src = url;
+            });
+        }
+
+        function hideImageTakeover() {
+            if (!imageTakeoverActive && !imageTakeoverEl.classList.contains('show')) return;
+
+            if (imageTakeoverHideTimer) {
+                clearTimeout(imageTakeoverHideTimer);
+                imageTakeoverHideTimer = null;
+            }
+
+            imageTakeoverEl.classList.add('fade-out');
+            imageTakeoverEl.style.opacity = '0';
+
+            setTimeout(() => {
+                imageTakeoverEl.classList.remove('show', 'fade-out');
+                imageTakeoverEl.style.opacity = '';
+                imageTakeoverImg.src = '';
+                imageTakeoverActive = false;
+            }, 600);
+        }
+
+        async function runImageTakeover() {
+            if (imageTakeoverActive) return;
+
+            const list = loadImageFilenames();
+            if (list.length === 0) {
+                console.warn('[ImageTakeover] No filenames configured.');
+                return;
+            }
+
+            for (let attempt = 0; attempt < list.length; attempt++) {
+                const filename = list[imageTakeoverIndex % list.length];
+                imageTakeoverIndex = (imageTakeoverIndex + 1) % list.length;
+
+                const ok = await showImageTakeover(filename);
+                if (ok) return;
+            }
+
+            console.warn('[ImageTakeover] All candidate images failed to load.');
+        }
+
+        function scheduleImageTakeover() {
+            if (imageTakeoverTimer) clearInterval(imageTakeoverTimer);
+            imageTakeoverTimer = setInterval(runImageTakeover, IMAGE_TAKEOVER_INTERVAL_MS);
+        }
+
+        imageTakeoverClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideImageTakeover();
+        });
+        imageTakeoverEl.addEventListener('click', (e) => {
+            if (e.target === imageTakeoverEl) hideImageTakeover();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && imageTakeoverEl.classList.contains('show')) {
+                hideImageTakeover();
+            }
+        });
+
+        // Admin controls for image takeover
+        const fieldImageFilenames = document.getElementById('fieldImageFilenames');
+        const imageTakeoverPreviewBtn = document.getElementById('imageTakeoverPreview');
+        const imageTakeoverSaveListBtn = document.getElementById('imageTakeoverSaveList');
+        const imageTakeoverResetListBtn = document.getElementById('imageTakeoverResetList');
+        const imageTakeoverCountEl = document.getElementById('imageTakeoverCount');
+
+        function refreshImageTakeoverCount() {
+            const list = loadImageFilenames();
+            if (imageTakeoverCountEl) imageTakeoverCountEl.textContent = list.length;
+        }
+
+        if (fieldImageFilenames) {
+            imageTakeoverPreviewBtn.addEventListener('click', () => {
+                const list = fieldImageFilenames.value
+                    .split('\n').map(s => s.trim()).filter(Boolean);
+                if (list.length === 0) {
+                    alert('Add at least one filename first.');
+                    return;
+                }
+                const saved = loadImageFilenames();
+                saveImageFilenames(list);
+                imageTakeoverIndex = 0;
+                hideImageTakeover();
+                runImageTakeover().finally(() => {
+                    if (!fieldImageFilenames.dataset.savedOnce) {
+                        saveImageFilenames(saved);
+                    }
+                });
+            });
+
+            imageTakeoverSaveListBtn.addEventListener('click', () => {
+                const list = fieldImageFilenames.value
+                    .split('\n').map(s => s.trim()).filter(Boolean);
+                if (list.length === 0) {
+                    alert('Add at least one filename first.');
+                    return;
+                }
+                saveImageFilenames(list);
+                fieldImageFilenames.dataset.savedOnce = '1';
+                refreshImageTakeoverCount();
+                alert(`Saved ${list.length} image filename(s).`);
+            });
+
+            imageTakeoverResetListBtn.addEventListener('click', () => {
+                if (!confirm('Reset image list to default filenames?')) return;
+                localStorage.removeItem(IMAGE_TAKEOVER_STORAGE_KEY);
+                fieldImageFilenames.value = DEFAULT_IMAGE_FILENAMES.join('\n');
+                refreshImageTakeoverCount();
+            });
+        }
 
         // LONG-PRESS HANDLER
         function attachLongPress(el, callback) {
@@ -3009,6 +3233,9 @@ async function fetchPARRemote() {
             fieldHeadline.value = cfg.event.headline;
             fieldBody.value = cfg.event.body;
             fieldDate.value = cfg.event.asOfDate || '';
+
+            fieldImageFilenames.value = loadImageFilenames().join('\n');
+            refreshImageTakeoverCount();
 
             adminModal.classList.add('show');
             announcementTitle.classList.add('admin-active');
@@ -3136,7 +3363,6 @@ async function fetchPARRemote() {
         function init() {
             updateClock();
 
-            // Show cached content first, then fetch remote
             const cachedAnnouncement = loadAnnouncementConfig();
             renderAnnouncement(cachedAnnouncement);
             fetchAnnouncementRemote();
@@ -3145,21 +3371,28 @@ async function fetchPARRemote() {
             fetchStatusRemote();
 
             fetchWeather();
+            fetchAirQuality();
             fetchEarthquakes();
-            fetchNews();
-            setAirQuality(42, 18);
+            initVideoPlayer();
 
-            // PAR status — show clear state immediately, then fetch from GitHub
             updatePARStrip(false, null, false, null, false, null);
             fetchPARRemote();
 
             setInterval(updateClock, 1000);
             setInterval(fetchWeather, WEATHER_REFRESH_MS);
+            setInterval(fetchAirQuality, AQI_REFRESH_MS);
             setInterval(fetchEarthquakes, EQ_REFRESH_MS);
-            setInterval(fetchNews, NEWS_REFRESH_MS);
+            setInterval(initVideoPlayer, VIDEO_REFRESH_MS);
             setInterval(fetchAnnouncementRemote, ANNOUNCEMENT_REFRESH_MS);
             setInterval(fetchStatusRemote, STATUS_REFRESH_MS);
             setInterval(fetchPARRemote, PAR_REFRESH_MS);
+
+            // Image takeover — first scheduled + recurring
+            refreshImageTakeoverCount();
+            setTimeout(() => {
+                runImageTakeover();
+            }, IMAGE_TAKEOVER_FIRST_DELAY_MS);
+            scheduleImageTakeover();
         }
 
         if (document.readyState === 'loading') {
