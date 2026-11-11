@@ -1,9 +1,9 @@
 {
-  "hasTyphoon": false,
+  "hasTyphoon": true,
   "typhoonInfo": {
-    "name": "",
-    "wind": 0,
-    "location": ""
+    "name": "Typhoon Cempaka",
+    "wind": 130,
+    "location": "Outside PAR · 1,415 km East Northeast of Extreme Luzon"
   },
   "hasLPA": false,
   "lpaInfo": "",
